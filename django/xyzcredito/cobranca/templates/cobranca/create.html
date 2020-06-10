@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <input id="{{ form.devedor.id_for_label }}" type="text" name="{{ form.devedor.name }}" placeholder=" Devedor" required>
+    {{ form.devedor.errors }}
+    
+    <br><br>
+    
+    <input id="{{ form.codigo_identificador.id_for_label }}" type="text" name="{{ form.codigo_identificador.name }}" placeholder=" CPF ou CPNJ"required>
+    {{ form.codigo_identificador.errors }}
+    
+    <br><br>
+    
+    <input id="{{ form.debito.id_for_label }}" type="number" name="{{ form.debito.name }}" placeholder=" Debito" required>
+    {{ form.debito.errors }}
+
+    <br><br>
+
+    <button type="submit">Cadastrar Devedor</button>
+</form>
+{% endblock %}
