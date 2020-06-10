@@ -135,3 +135,4 @@ sql_app
 sql_app.db
 
 django/djvenv
+*.vscode
