@@ -3,36 +3,50 @@ import enum
 import validate_docbr
 
 
-class PersonTypeEnum(str, enum.Enum):
-    pj = 'pj'
-    pf = 'pf'
+class EntityTypeEnum(str, enum.Enum):
+    pj = "pj"
+    pf = "pf"
 
 
-class Person(pydantic.BaseModel):
+class Entity(pydantic.BaseModel):
     class Config:
         orm_mode = True
 
-    cpf_cnpj: str
     name: str
-    type_person: PersonTypeEnum
+    type_entity: EntityTypeEnum
+    cpf_cnpj: str
 
-
-    @validator('cpf_cnpj')
+    @pydantic.validator("cpf_cnpj")
     def validate_cpf_cnpj(cls, v, values):
-        breakpoint()
+        if "type_entity" not in values:
+            raise ValueError("Entity Type is not defined")
+
         cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
-
-        if values['type_person'] == PersonTypeEnum.pj:
+        if values["type_entity"] == EntityTypeEnum.pj:
             if not cnpj.validate(v):
-                raise ValueError('Invalid CNPJ')
+                raise ValueError("Invalid CNPJ")
 
-            return cnpj.mask(v)
+            return "".join(filter(str.isdigit, v))
 
         if not cpf.validate(v):
-            raise ValueError('Invalid CPF')
+            raise ValueError("Invalid CPF")
 
-        return cpf.mask(v)
+        return "".join(filter(str.isdigit, v))
 
 
-class PersonCreate(Person):
+class EntityCreate(Entity):
     password: str
+
+
+class Charge(pydantic.Basemodel):
+    class Config:
+        orm_mode = True
+
+    debtor: Entity
+    creditor_cpf_cnpj: str
+    debito: float
+    is_active: bool
+
+
+class CreateCharge(Charge):
+    pass
