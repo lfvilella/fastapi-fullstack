@@ -1,10 +1,18 @@
 import sqlalchemy.orm
 import typing
+import uuid
 from . import models, schemas
 
 
 def get_entity_by_cpf_cnpj(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.Entity:
     return db.query(models.Entity).get(cpf_cnpj)
+
+def get_charge_by_id(db: sqlalchemy.orm.Session, id_uuid: str) -> models.Charge:
+    query = db.query(models.Charge).get(id_uuid)
+    if not query:
+        return None
+    
+    return query
 
 
 def create_entity(db: sqlalchemy.orm.Session, entity: schemas.EntityCreate, persist:bool = True) -> models.Entity:
@@ -33,7 +41,12 @@ def create_charge(db: sqlalchemy.orm.Session, charge: schemas.ChargeCreate) -> m
     if not debtor_db:
         debtor_db = create_entity(db, charge.debtor, persist=False)
 
-    db_charge = models.Charge(debtor_cpf_cnpj = debtor_db.cpf_cnpj,
+    id_uuid = uuid.uuid4
+    if get_charge_by_id(db, id_uuid):
+        raise ValueError("Charge alredy exist")
+    
+    db_charge = models.Charge(id = id_uuid,
+                              debtor_cpf_cnpj = debtor_db.cpf_cnpj,
                               creditor_cpf_cnpj = creditor_db.cpf_cnpj,
                               debito = charge.debito,
                               is_active = True)
