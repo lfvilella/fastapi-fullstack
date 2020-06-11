@@ -42,7 +42,7 @@ def read_entity(cpf_cnpj: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_
 def filter_entity(type_entity: schemas.EntityTypeEnum = None,
                   limit: int = 100,
                   db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    entities = data_access.filter_entity(db, type_entity, limit)
+    entities = data_access.filter_entity_by_type(db, type_entity, limit)
     if not entities:
         raise fastapi.HTTPException(status_code=404, detail="Entities not found")
 

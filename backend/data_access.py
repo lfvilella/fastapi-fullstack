@@ -20,8 +20,8 @@ def create_entity(db: sqlalchemy.orm.Session, entity: schemas.EntityCreate, pers
     return db_entity
 
 
-def filter_entity(
-    db: sqlalchemy.orm.Session, type_entity: str, limit: int = 100) -> typing.List[models.Entity]:
+def filter_entity_by_type(db: sqlalchemy.orm.Session,
+                  type_entity: str, limit: int = 100) -> typing.List[models.Entity]:
     query = db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
     return query.all()
 
