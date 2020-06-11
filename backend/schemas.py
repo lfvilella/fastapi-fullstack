@@ -38,15 +38,31 @@ class EntityCreate(Entity):
     password: str
 
 
-class Charge(pydantic.Basemodel):
+class Charge(pydantic.BaseModel):
     class Config:
         orm_mode = True
 
     debtor: Entity
     creditor_cpf_cnpj: str
-    debito: float
+    debito: pydantic.PositiveFloat
     is_active: bool
 
+    @pydantic.validator("creditor_cpf_cnpj")
+    def validate_creditor_cpf_cnpj(cls, v, values):
+        cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
+        if not (cpf.validate(v) or cnpj.validate(v)):
+            raise ValueError("Invalid CPF / CNPJ")
 
-class CreateCharge(Charge):
+        if 'debtor' not in values:
+            raise ValueError("Debtor not found")
+
+        debtor_cpf_cnpj = values['debtor'].cpf_cnpj
+        creditor_cpf_cnpj = ''.join(filter(str.isdigit, v))
+        if debtor_cpf_cnpj == creditor_cpf_cnpj:
+            raise ValueError("You can not add debt for yourself")
+
+        return creditor_cpf_cnpj
+
+
+class ChargeCreate(Charge):
     pass

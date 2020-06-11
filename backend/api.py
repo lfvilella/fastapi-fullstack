@@ -20,9 +20,8 @@ def get_db():
 
 
 @app.post(_VERSION + "/entity", response_model=schemas.Entity)
-def create_entity(
-    entity: schemas.EntityCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
-):
+def create_entity(entity: schemas.EntityCreate,
+                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
     db_entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=entity.cpf_cnpj)
     if db_entity:
         raise fastapi.HTTPException(status_code=400, detail="Entity alredy exist")
@@ -40,13 +39,16 @@ def read_entity(cpf_cnpj: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_
 
 
 @app.get(_VERSION + "/entity", response_model=typing.List[schemas.Entity])
-def filter_entity(
-    type_entity: schemas.EntityTypeEnum = None,
-    limit: int = 100,
-    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
-) -> schemas.Entity:
+def filter_entity(type_entity: schemas.EntityTypeEnum = None,
+                  limit: int = 100,
+                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
     entities = data_access.filter_entity(db, type_entity, limit)
     if not entities:
         raise fastapi.HTTPException(status_code=404, detail="Entities not found")
 
     return entities
+
+
+@app.post(_VERSION + "/charge", response_model=schemas.Charge)
+def create_charge(charge: schemas.ChargeCreate):
+    return schemas.Charge(**charge.dict())
