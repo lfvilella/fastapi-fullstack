@@ -118,8 +118,10 @@ def get_charge_by_creditor_cpf_cnpj(
 
 
 def filter_charge(
-    db: sqlalchemy.orm.Session, charge_filter: schemas.ChargeFilter
+    db: sqlalchemy.orm.Session, charge_filter: schemas.ChargeFilter, api_key: str
 ) -> typing.List[models.Charge]:
+    db_api_key = check_api_key(db, api_key=api_key)
+
     query = db.query(models.Charge)
     if charge_filter.debtor_cpf_cnpj:
         query = query.filter_by(debtor_cpf_cnpj=charge_filter.debtor_cpf_cnpj)
@@ -130,7 +132,11 @@ def filter_charge(
     if charge_filter.is_active is not None:
         query = query.filter_by(is_active=charge_filter.is_active)
 
-    return query.all()
+    queries = query.all()
+    if not queries:
+        raise ValidationError("Charge not found")
+
+    return queries
 
 
 def create_charge(

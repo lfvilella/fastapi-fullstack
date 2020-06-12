@@ -92,6 +92,7 @@ def filter_charge(
     debtor_cpf_cnpj: str = None,
     creditor_cpf_cnpj: str = None,
     is_active: bool = None,
+    api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     charge_filter = schemas.ChargeFilter(
@@ -99,11 +100,14 @@ def filter_charge(
         creditor_cpf_cnpj=creditor_cpf_cnpj,
         is_active=is_active,
     )
-    charges = data_access.filter_charge(db, charge_filter=charge_filter)
-    if not charges:
-        raise fastapi.HTTPException(status_code=404, detail="Charge not found")
-
-    return charges
+    try:
+        return data_access.filter_charge(
+            db, charge_filter=charge_filter, api_key=api_key
+        )
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
+        raise fastapi.HTTPException(status_code=404, detail=str(error))
 
 
 @app.post(_VERSION + "/charge/payment", response_model=schemas.ChargeDatabase)
