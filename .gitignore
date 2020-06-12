@@ -136,3 +136,4 @@ sql_app.db
 
 django/djvenv
 *.vscode
+.DS_Store

@@ -85,11 +85,30 @@ def entity_set_password(
     return entity
 
 
+# APIKEY THINGS
+
+
+def check_api_key(db: sqlalchemy.orm.Session, api_key: str):
+    db_api_key = get_entity_api_key_by_id(db, api_key=api_key)
+    if not db_api_key:
+        raise APIKeyNotFound()
+
+    return db_api_key
+
+
 # CHARGE THINGS
 
 
-def get_charge_by_id(db: sqlalchemy.orm.Session, charge_id: str) -> models.Charge:
-    return db.query(models.Charge).get(charge_id)
+def get_charge_by_id(
+    db: sqlalchemy.orm.Session, charge_id: str, api_key: str
+) -> models.Charge:
+    db_api_key = check_api_key(db, api_key=api_key)
+    db_charge = db.query(models.Charge).get(charge_id)
+
+    if not db_charge:
+        raise ValidationError("Charge does not exist")
+
+    return db_charge
 
 
 def get_charge_by_creditor_cpf_cnpj(
@@ -118,9 +137,7 @@ def create_charge(
     db: sqlalchemy.orm.Session, charge: schemas.ChargeCreate, api_key: str
 ) -> models.Charge:
 
-    db_api_key = get_entity_api_key_by_id(db, api_key=api_key)
-    if not db_api_key:
-        raise APIKeyNotFound()
+    db_api_key = check_api_key(db, api_key=api_key)
 
     debtor_db = get_entity_by_cpf_cnpj(db, charge.debtor.cpf_cnpj)
     creditor_db = get_entity_by_cpf_cnpj(db, charge.creditor_cpf_cnpj)

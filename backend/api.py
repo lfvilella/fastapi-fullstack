@@ -74,12 +74,17 @@ def create_charge(
 
 
 @app.get(_VERSION + "/charge/{charge_id}", response_model=schemas.ChargeDatabase)
-def read_charge(charge_id: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    db_charge = data_access.get_charge_by_id(db, charge_id=charge_id)
-    if not db_charge:
-        raise fastapi.HTTPException(status_code=404, detail="Charge does not exist")
-
-    return db_charge
+def read_charge(
+    charge_id: str,
+    api_key: str = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+):
+    try:
+        return data_access.get_charge_by_id(db, charge_id=charge_id, api_key=api_key)
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
+        raise fastapi.HTTPException(status_code=404, detail=str(error))
 
 
 @app.get(_VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase])
