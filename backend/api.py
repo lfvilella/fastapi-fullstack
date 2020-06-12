@@ -38,25 +38,36 @@ def create_entity(
 
 
 @app.get(_VERSION + "/entity/{cpf_cnpj}", response_model=schemas.Entity)
-def read_entity(cpf_cnpj: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    db_entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=cpf_cnpj)
-    if not db_entity:
-        raise fastapi.HTTPException(status_code=404, detail="Entity does not exist")
-
-    return db_entity
+def read_entity(
+    cpf_cnpj: str,
+    api_key: str = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+):
+    try:
+        return data_access.get_entity_by_cpf_cnpj(
+            db, cpf_cnpj=cpf_cnpj, api_key=api_key
+        )
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
+        raise fastapi.HTTPException(status_code=404, detail=str(error))
 
 
 @app.get(_VERSION + "/entity", response_model=typing.List[schemas.Entity])
 def filter_entity(
     type_entity: schemas.EntityTypeEnum = None,
     limit: int = 100,
+    api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    entities = data_access.filter_entity_by_type(db, type_entity, limit)
-    if not entities:
-        raise fastapi.HTTPException(status_code=404, detail="Entities not found")
-
-    return entities
+    try:
+        return data_access.filter_entity_by_type(
+            db=db, type_entity=type_entity, limit=limit, api_key=api_key
+        )
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
+        raise fastapi.HTTPException(status_code=404, detail=str(error))
 
 
 @app.post(_VERSION + "/charge", response_model=schemas.ChargeDatabase)

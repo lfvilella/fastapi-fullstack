@@ -16,8 +16,16 @@ class ValidationError(ValueError):
 # ENTITY THINGS
 
 
-def get_entity_by_cpf_cnpj(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.Entity:
-    return db.query(models.Entity).get(cpf_cnpj)
+def get_entity_by_cpf_cnpj(
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str
+) -> models.Entity:
+    db_api_key = check_api_key(db, api_key=api_key)
+
+    db_entity = db.query(models.Entity).get(cpf_cnpj)
+    if not db_entity:
+        raise ValidationError("Entity does not exist")
+
+    return db_entity
 
 
 def get_entity_by_cpf_cnpj_and_password(
@@ -64,9 +72,15 @@ def get_entity_api_key_by_id(db: sqlalchemy.orm.Session, api_key: str) -> models
 
 
 def filter_entity_by_type(
-    db: sqlalchemy.orm.Session, type_entity: str, limit: int = 100
+    db: sqlalchemy.orm.Session, type_entity: str, api_key: str, limit: int = 100
 ) -> typing.List[models.Entity]:
+    db_api_key = check_api_key(db, api_key=api_key)
+
     query = db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
+
+    if not query.all():
+        raise ValidationError("Entities not found")
+
     return query.all()
 
 
