@@ -19,7 +19,7 @@ class Charge(Base):
     __tablename__ = "charges"
 
     id = sqlalchemy.Column(
-        sqlalchemy.String, primary_key=True, unique=True, index=True, default=uuid.uuid4
+        sqlalchemy.String, primary_key=True, unique=True, index=True, default= lambda: str(uuid.uuid4())
     )
     # Field cpf_cnpj do devedor da class Entity
     debtor_cpf_cnpj = sqlalchemy.Column(sqlalchemy.String, sqlalchemy.ForeignKey("entities.cpf_cnpj"))

@@ -31,12 +31,27 @@ def filter_entity_by_type(db: sqlalchemy.orm.Session,
 
 # CHARGE THINGS
 
-def get_charge_by_id(db: sqlalchemy.orm.Session, id_uuid: str) -> models.Charge:
-    return db.query(models.Charge).get(id_uuid)
+def get_charge_by_id(db: sqlalchemy.orm.Session, charge_id: str) -> models.Charge:
+    return db.query(models.Charge).get(charge_id)
 
 
 def get_charge_by_creditor_cpf_cnpj(db: sqlalchemy.orm.Session, creditor_cpf_cnpj: str) -> models.Charge:
     return db.query(models.Charge).get(creditor_cpf_cnpj)
+
+
+def filter_charge(db: sqlalchemy.orm.Session,
+                  charge_filter: schemas.ChargeFilter) -> typing.List[models.Charge]:
+    query = db.query(models.Charge)
+    if charge_filter.debtor_cpf_cnpj:
+        query = query.filter_by(debtor_cpf_cnpj=charge_filter.debtor_cpf_cnpj)
+
+    if charge_filter.creditor_cpf_cnpj:
+        query = query.filter_by(creditor_cpf_cnpj=charge_filter.creditor_cpf_cnpj)
+    
+    if charge_filter.is_active is not None:
+        query = query.filter_by(is_active=charge_filter.is_active)
+    
+    return query.all()
 
 
 def create_charge(db: sqlalchemy.orm.Session, charge: schemas.ChargeCreate) -> models.Charge:
@@ -45,10 +60,6 @@ def create_charge(db: sqlalchemy.orm.Session, charge: schemas.ChargeCreate) -> m
 
     if not debtor_db:
         debtor_db = create_entity(db, charge.debtor, persist=False)
-
-    # id_uuid = uuid.uuid4()
-    # if get_charge_by_id(db, id_uuid):
-    #     raise ValueError("Charge alredy exist")
     
     db_charge = models.Charge(debtor_cpf_cnpj = debtor_db.cpf_cnpj,
                               creditor_cpf_cnpj = creditor_db.cpf_cnpj,

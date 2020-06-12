@@ -49,21 +49,34 @@ def filter_entity(type_entity: schemas.EntityTypeEnum = None,
     return entities
 
 
-@app.post(_VERSION + "/charge", response_model=schemas.Charge)
+@app.post(_VERSION + "/charge", response_model=schemas.ChargeDatabase)
 def create_charge(charge: schemas.ChargeCreate,
                   db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    db_charge = data_access.get_charge_by_creditor_cpf_cnpj(db, creditor_cpf_cnpj=charge.creditor_cpf_cnpj)
-    if db_charge:
-        raise fastapi.HTTPException(status_code=400, detail="Charge alredy exist")
-
+    schema_charge = schemas
+    
     return data_access.create_charge(db=db, charge=charge)
 
 
 
-@app.get(_VERSION + "/charge/{creditor_cpf_cnpj}", response_model=schemas.Charge)
-def read_charge(creditor_cpf_cnpj: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    db_charge = data_access.get_charge_by_creditor_cpf_cnpj(db, creditor_cpf_cnpj=creditor_cpf_cnpj)
+@app.get(_VERSION + "/charge/{charge_id}", response_model=schemas.ChargeDatabase)
+def read_charge(charge_id: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    db_charge = data_access.get_charge_by_id(db, charge_id=charge_id)
     if not db_charge:
         raise fastapi.HTTPException(status_code=404, detail="Charge does not exist")
 
     return db_charge
+
+
+@app.get(_VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase])
+def filter_charge(debtor_cpf_cnpj: str = None,
+                  creditor_cpf_cnpj: str = None,
+                  is_active: bool = None,
+                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    charge_filter = schemas.ChargeFilter(debtor_cpf_cnpj=debtor_cpf_cnpj,
+                                         creditor_cpf_cnpj=creditor_cpf_cnpj,
+                                         is_active=is_active)
+    charges = data_access.filter_charge(db, charge_filter=charge_filter)
+    if not charges:
+        raise fastapi.HTTPException(status_code=404, detail="Charge not found")
+
+    return charges

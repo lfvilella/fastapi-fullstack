@@ -1,6 +1,7 @@
 import pydantic
 import enum
 import validate_docbr
+import typing
 
 
 class EntityTypeEnum(str, enum.Enum):
@@ -38,21 +39,20 @@ class EntityCreate(Entity):
     password: str
 
 
-class Charge(pydantic.BaseModel):
+class ChargeCreate(pydantic.BaseModel):
     class Config:
         orm_mode = True
 
     debtor: Entity
     creditor_cpf_cnpj: str
     debito: pydantic.PositiveFloat
-    is_active: bool
 
     @pydantic.validator("creditor_cpf_cnpj")
     def validate_creditor_cpf_cnpj(cls, v, values):
         cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
         if not (cpf.validate(v) or cnpj.validate(v)):
             raise ValueError("Invalid CPF / CNPJ")
-
+        
         if 'debtor' not in values:
             raise ValueError("Debtor not found")
 
@@ -64,5 +64,21 @@ class Charge(pydantic.BaseModel):
         return creditor_cpf_cnpj
 
 
-class ChargeCreate(Charge):
-    pass
+class ChargeDatabase(pydantic.BaseModel):
+    class Config:
+        orm_mode = True
+
+    id: str
+    debtor_cpf_cnpj: str
+    creditor_cpf_cnpj: str
+    debito: pydantic.PositiveFloat
+    is_active: bool
+
+
+class ChargeFilter(pydantic.BaseModel):
+    class Config:
+        orm_mode = True
+
+    debtor_cpf_cnpj: typing.Optional[str] = None
+    creditor_cpf_cnpj: typing.Optional[str] = None
+    is_active: typing.Optional[bool] = None
