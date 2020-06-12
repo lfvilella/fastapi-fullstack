@@ -13,6 +13,7 @@ class Entity(Base):
     )
     name = sqlalchemy.Column(sqlalchemy.String)
     type_entity = sqlalchemy.Column(sqlalchemy.String(2))
+    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True, default=None)
 
 
 class Charge(Base):
@@ -37,3 +38,19 @@ class Charge(Base):
     is_active = sqlalchemy.Column(sqlalchemy.Boolean)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime)
     payed_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True, default=None)
+
+
+class EntityAPIKey(Base):
+    __tablename__ = "entity_apikeys"
+
+    id = sqlalchemy.Column(
+        sqlalchemy.String,
+        primary_key=True,
+        unique=True,
+        index=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+    entity_cpf_cnpj = sqlalchemy.Column(
+        sqlalchemy.String, sqlalchemy.ForeignKey("entities.cpf_cnpj")
+    )
+    created_at = sqlalchemy.Column(sqlalchemy.DateTime)

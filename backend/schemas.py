@@ -87,3 +87,13 @@ class ChargeFilter(pydantic.BaseModel):
 class ChargePayment(pydantic.BaseModel):
     id: str
     creditor_cpf_cnpj: str
+
+
+class Authenticate(pydantic.BaseModel):
+    cpf_cnpj: str
+    password: str
+
+
+class EntityAPIKey(pydantic.BaseModel):
+    api_key: str
+    cpf_cnpj: str

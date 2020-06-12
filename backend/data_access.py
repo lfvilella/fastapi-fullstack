@@ -2,7 +2,7 @@ import sqlalchemy.orm
 import typing
 import uuid
 import datetime
-from . import models, schemas
+from . import models, schemas, security
 
 
 # ENTITY THINGS
@@ -12,13 +12,24 @@ def get_entity_by_cpf_cnpj(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.
     return db.query(models.Entity).get(cpf_cnpj)
 
 
+def get_entity_by_cpf_cnpj_and_password(
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, password: str
+) -> models.Entity:
+    entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
+    if not entity:
+        return None
+
+    if not security.verify_password(password, entity.hashed_password):
+        return None
+
+    return entity
+
+
 def create_entity(
     db: sqlalchemy.orm.Session, entity: schemas.Entity, persist: bool = True
 ) -> models.Entity:
 
-    entity_data = entity.dict()
-
-    db_entity = models.Entity(**entity_data)
+    db_entity = models.Entity(**entity.dict())
     db.add(db_entity)
     if persist:
         db.commit()
@@ -27,11 +38,38 @@ def create_entity(
     return db_entity
 
 
+def create_entity_api_key(
+    db: sqlalchemy.orm.Session, cpf_cnpj: str
+) -> models.EntityAPIKey:
+
+    db_api_key = models.EntityAPIKey(
+        entity_cpf_cnpj=cpf_cnpj,
+        created_at=datetime.datetime.utcnow(),
+    )
+    db.add(db_api_key)
+    db.commit()
+    return db_api_key
+
 def filter_entity_by_type(
     db: sqlalchemy.orm.Session, type_entity: str, limit: int = 100
 ) -> typing.List[models.Entity]:
     query = db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
     return query.all()
+
+
+def entity_set_password(
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, password: str, persist=True
+) -> models.Entity:
+    entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
+
+    if not entity:
+        raise ValueError("Entity does not exist")
+
+    entity.hashed_password = security.get_password_hash(password)
+    db.add(entity)
+    if persist:
+        db.commit()
+    return entity
 
 
 # CHARGE THINGS
