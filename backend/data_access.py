@@ -8,8 +8,10 @@ from . import models, schemas, security
 class APIKeyNotFound(Exception):
     pass
 
+
 class ValidationError(ValueError):
     pass
+
 
 # ENTITY THINGS
 
@@ -44,26 +46,21 @@ def create_entity(
     return db_entity
 
 
-def create_entity_api_key(
-    db: sqlalchemy.orm.Session, cpf_cnpj: str
-) -> models.EntityAPIKey:
+def create_entity_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
 
-    db_api_key = models.EntityAPIKey(
-        cpf_cnpj=cpf_cnpj,
-        created_at=datetime.datetime.utcnow(),
+    db_api_key = models.APIKey(
+        cpf_cnpj=cpf_cnpj, created_at=datetime.datetime.utcnow(),
     )
     db.add(db_api_key)
     db.commit()
     return db_api_key
 
 
-def get_entity_api_key_by_id(
-    db: sqlalchemy.orm.Session, api_key: str
-) -> models.EntityAPIKey:
+def get_entity_api_key_by_id(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
     if not api_key:
         return None
-        
-    return db.query(models.EntityAPIKey).get(api_key)
+
+    return db.query(models.APIKey).get(api_key)
 
 
 def filter_entity_by_type(
@@ -120,11 +117,10 @@ def filter_charge(
 def create_charge(
     db: sqlalchemy.orm.Session, charge: schemas.ChargeCreate, api_key: str
 ) -> models.Charge:
-    
+
     db_api_key = get_entity_api_key_by_id(db, api_key=api_key)
     if not db_api_key:
         raise APIKeyNotFound()
-
 
     debtor_db = get_entity_by_cpf_cnpj(db, charge.debtor.cpf_cnpj)
     creditor_db = get_entity_by_cpf_cnpj(db, charge.creditor_cpf_cnpj)
@@ -134,7 +130,6 @@ def create_charge(
 
     if not debtor_db:
         debtor_db = create_entity(db, charge.debtor, persist=False)
-
 
     db_charge = models.Charge(
         debtor_cpf_cnpj=debtor_db.cpf_cnpj,

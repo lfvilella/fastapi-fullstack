@@ -27,7 +27,9 @@ def create_entity(
     if db_entity:
         raise fastapi.HTTPException(status_code=400, detail="Entity alredy exist")
 
-    db_entity = data_access.create_entity(db=db, entity=schemas.Entity(**entity.dict()), persist=False)
+    db_entity = data_access.create_entity(
+        db=db, entity=schemas.Entity(**entity.dict()), persist=False
+    )
     data_access.entity_set_password(
         db=db, cpf_cnpj=entity.cpf_cnpj, password=entity.password, persist=False
     )
@@ -59,7 +61,9 @@ def filter_entity(
 
 @app.post(_VERSION + "/charge", response_model=schemas.ChargeDatabase)
 def create_charge(
-    charge: schemas.ChargeCreate, api_key: str = None, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+    charge: schemas.ChargeCreate,
+    api_key: str = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     try:
         return data_access.create_charge(db=db, charge=charge, api_key=api_key)
@@ -109,7 +113,7 @@ def charge_payment(
         raise fastapi.HTTPException(status_code=400, detail=str(error))
 
 
-@app.post(_VERSION + "/authenticate", response_model=schemas.EntityAPIKey)
+@app.post(_VERSION + "/authenticate", response_model=schemas.APIKey)
 def authenticate_login(
     login: schemas.Authenticate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
 ):
@@ -119,6 +123,5 @@ def authenticate_login(
     if not entity:
         raise fastapi.HTTPException(status_code=400, detail="Invalid Credencials")
 
-
     api_key = data_access.create_entity_api_key(db, cpf_cnpj=entity.cpf_cnpj)
-    return schemas.EntityAPIKey(api_key=api_key.id ,cpf_cnpj=entity.cpf_cnpj)
+    return schemas.APIKey(api_key=api_key.id, cpf_cnpj=entity.cpf_cnpj)

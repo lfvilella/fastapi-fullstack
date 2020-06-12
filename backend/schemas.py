@@ -94,6 +94,6 @@ class Authenticate(pydantic.BaseModel):
     password: str
 
 
-class EntityAPIKey(pydantic.BaseModel):
+class APIKey(pydantic.BaseModel):
     api_key: str
     cpf_cnpj: str

@@ -40,8 +40,8 @@ class Charge(Base):
     payed_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True, default=None)
 
 
-class EntityAPIKey(Base):
-    __tablename__ = "entity_apikeys"
+class APIKey(Base):
+    __tablename__ = "apikeys"
 
     id = sqlalchemy.Column(
         sqlalchemy.String,
@@ -51,6 +51,10 @@ class EntityAPIKey(Base):
         default=lambda: str(uuid.uuid4()),
     )
     cpf_cnpj = sqlalchemy.Column(
-        sqlalchemy.String, sqlalchemy.ForeignKey("entities.cpf_cnpj")
+        sqlalchemy.String,
+        sqlalchemy.ForeignKey("entities.cpf_cnpj"),
+        nullable=True,
+        default=None,
     )
+    is_admin = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime)
