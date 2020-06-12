@@ -5,11 +5,19 @@ import datetime
 from . import models, schemas, security
 
 
-class APIKeyNotFound(Exception):
+class DataAccessException(Exception):
     pass
 
 
-class ValidationError(ValueError):
+class APIKeyNotFound(DataAccessException):
+    pass
+
+
+class ValidationError(DataAccessException):
+    pass
+
+
+class DoesNotExisit(DataAccessException):
     pass
 
 
@@ -17,13 +25,14 @@ class ValidationError(ValueError):
 
 
 def get_entity_by_cpf_cnpj(
-    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str = None
 ) -> models.Entity:
-    db_api_key = check_api_key(db, api_key=api_key)
+    if api_key:
+        check_api_key(db, api_key=api_key)
 
     db_entity = db.query(models.Entity).get(cpf_cnpj)
     if not db_entity:
-        raise ValidationError("Entity does not exist")
+        raise DoesNotExisit("Entity does not exist")
 
     return db_entity
 
@@ -69,7 +78,7 @@ def filter_entity_by_type(
     query = db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
 
     if not query.all():
-        raise ValidationError("Entities not found")
+        raise DoesNotExisit("Entities not found")
 
     return query.all()
 
@@ -80,7 +89,7 @@ def entity_set_password(
     entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
 
     if not entity:
-        raise ValueError("Entity does not exist")
+        raise DoesNotExisit("Entity does not exist")
 
     entity.hashed_password = security.get_password_hash(password)
     db.add(entity)
@@ -120,7 +129,7 @@ def get_charge_by_id(
     db_charge = db.query(models.Charge).get(charge_id)
 
     if not db_charge:
-        raise ValidationError("Charge does not exist")
+        raise DoesNotExisit("Charge does not exist")
 
     return db_charge
 
@@ -148,7 +157,7 @@ def filter_charge(
 
     queries = query.all()
     if not queries:
-        raise ValidationError("Charge not found")
+        raise DoesNotExisit("Charge not found")
 
     return queries
 
@@ -188,14 +197,14 @@ def payment_charge(
 
     db_charge = get_charge_by_id(db, charge_id=payment_info.id, api_key=api_key)
 
-    if db_charge.creditor_cpf_cnpj != db_api_key.cpf_cnpj:
-        raise ValidationError("CPF / CNPJ is not the same as the creditor")
-
     if not db_charge:
-        raise ValidationError("Charge not found to pay")
+        raise DoesNotExisit("Charge not found to pay")
+
+    if db_charge.creditor_cpf_cnpj != db_api_key.cpf_cnpj:
+        raise ValidationError("CPF/CNPJ is not the same on charge")
 
     if db_charge.creditor_cpf_cnpj != payment_info.creditor_cpf_cnpj:
-        raise ValidationError("CPF/CNPJ is not the same on charge")
+        raise ValidationError("CPF / CNPJ is not the same as the creditor")
 
     db_charge.payed_at = datetime.datetime.utcnow()
     db_charge.is_active = False
