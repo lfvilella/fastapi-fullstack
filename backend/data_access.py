@@ -167,15 +167,21 @@ def create_charge(
 
 
 def payment_charge(
-    db: sqlalchemy.orm.Session, payment_info: schemas.ChargePayment
+    db: sqlalchemy.orm.Session, payment_info: schemas.ChargePayment, api_key: str
 ) -> models.Charge:
-    db_charge = get_charge_by_id(db, payment_info.id)
+
+    db_api_key = check_api_key(db, api_key=api_key)
+
+    db_charge = get_charge_by_id(db, charge_id=payment_info.id, api_key=api_key)
+
+    if db_charge.creditor_cpf_cnpj != db_api_key.cpf_cnpj:
+        raise ValidationError("CPF / CNPJ is not the same as the creditor")
 
     if not db_charge:
-        raise ValueError("Charge not found to pay")
+        raise ValidationError("Charge not found to pay")
 
     if db_charge.creditor_cpf_cnpj != payment_info.creditor_cpf_cnpj:
-        raise ValueError("CPF/CNPJ is not the same on charge")
+        raise ValidationError("CPF/CNPJ is not the same on charge")
 
     db_charge.payed_at = datetime.datetime.utcnow()
     db_charge.is_active = False

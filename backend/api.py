@@ -113,12 +113,17 @@ def filter_charge(
 @app.post(_VERSION + "/charge/payment", response_model=schemas.ChargeDatabase)
 def charge_payment(
     payment_info: schemas.ChargePayment,
+    api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
 
     try:
-        return data_access.payment_charge(db, payment_info)
-    except ValueError as error:
+        return data_access.payment_charge(
+            db, payment_info=payment_info, api_key=api_key
+        )
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
         raise fastapi.HTTPException(status_code=400, detail=str(error))
 
 
