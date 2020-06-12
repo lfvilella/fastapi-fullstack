@@ -54,16 +54,6 @@ def create_entity(
     return db_entity
 
 
-def create_entity_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
-
-    db_api_key = models.APIKey(
-        cpf_cnpj=cpf_cnpj, created_at=datetime.datetime.utcnow(),
-    )
-    db.add(db_api_key)
-    db.commit()
-    return db_api_key
-
-
 def get_entity_api_key_by_id(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
     if not api_key:
         return None
@@ -100,6 +90,16 @@ def entity_set_password(
 
 
 # APIKEY THINGS
+
+
+def create_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
+
+    db_api_key = models.APIKey(
+        cpf_cnpj=cpf_cnpj, created_at=datetime.datetime.utcnow(),
+    )
+    db.add(db_api_key)
+    db.commit()
+    return db_api_key
 
 
 def check_api_key(db: sqlalchemy.orm.Session, api_key: str):

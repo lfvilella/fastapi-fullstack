@@ -148,5 +148,19 @@ def authenticate_login(
     if not entity:
         raise fastapi.HTTPException(status_code=400, detail="Invalid Credencials")
 
-    api_key = data_access.create_entity_api_key(db, cpf_cnpj=entity.cpf_cnpj)
+    api_key = data_access.create_api_key(db, cpf_cnpj=entity.cpf_cnpj)
+    return schemas.APIKey(api_key=api_key.id, cpf_cnpj=entity.cpf_cnpj)
+
+
+@app.post(_VERSION + "/authenticate", response_model=schemas.APIKey)
+def authenticate_logout(
+    login: schemas.Authenticate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+):
+    entity = data_access.get_entity_by_cpf_cnpj_and_password(
+        db, cpf_cnpj=login.cpf_cnpj, password=login.password
+    )
+    if not entity:
+        raise fastapi.HTTPException(status_code=400, detail="Invalid Credencials")
+
+    api_key = data_access.create_api_key(db, cpf_cnpj=entity.cpf_cnpj)
     return schemas.APIKey(api_key=api_key.id, cpf_cnpj=entity.cpf_cnpj)
