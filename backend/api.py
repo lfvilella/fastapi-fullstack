@@ -20,15 +20,21 @@ def get_db():
 
 
 @app.exception_handler(data_access.DataAccessException)
-def handle_data_access_error(request: fastapi.Request, exception:data_access.DataAccessException):
+def handle_data_access_error(
+    request: fastapi.Request, exception: data_access.DataAccessException
+):
     if isinstance(exception, data_access.APIKeyNotFound):
         return fastapi.responses.JSONResponse(status_code=403)
-    
+
     if isinstance(exception, data_access.ValidationError):
-        return fastapi.responses.JSONResponse(status_code=400, content={'detail': str(exception)})
+        return fastapi.responses.JSONResponse(
+            status_code=400, content={"detail": str(exception)}
+        )
 
     if isinstance(exception, data_access.DoesNotExisit):
-        return fastapi.responses.JSONResponse(status_code=404, content={'detail': str(exception)})
+        return fastapi.responses.JSONResponse(
+            status_code=404, content={"detail": str(exception)}
+        )
 
     raise exception
 
@@ -58,7 +64,7 @@ def read_entity(
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     return data_access.get_entity_by_cpf_cnpj(
-        db, cpf_cnpj=cpf_cnpj, api_key=api_key
+        db, cpf_cnpj=cpf_cnpj, api_key=api_key, raise_error=True
     )
 
 
@@ -94,8 +100,8 @@ def read_charge(
 
 @app.get(_VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase])
 def filter_charge(
-    debtor_cpf_cnpj: str = None,
-    creditor_cpf_cnpj: str = None,
+    debtor_cpf_cnpj: schemas.CpfOrCnpj = None,
+    creditor_cpf_cnpj: schemas.CpfOrCnpj = None,
     is_active: bool = None,
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
@@ -105,10 +111,8 @@ def filter_charge(
         creditor_cpf_cnpj=creditor_cpf_cnpj,
         is_active=is_active,
     )
-    return data_access.filter_charge(
-        db, charge_filter=charge_filter, api_key=api_key
-    )
-    
+    return data_access.filter_charge(db, charge_filter=charge_filter, api_key=api_key)
+
 
 @app.post(_VERSION + "/charge/payment", response_model=schemas.ChargeDatabase)
 def charge_payment(
@@ -116,9 +120,7 @@ def charge_payment(
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    return data_access.payment_charge(
-        db, payment_info=payment_info, api_key=api_key
-    )
+    return data_access.payment_charge(db, payment_info=payment_info, api_key=api_key)
 
 
 @app.post(_VERSION + "/authenticate", response_model=schemas.APIKey)

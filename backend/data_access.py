@@ -25,14 +25,16 @@ class DoesNotExisit(DataAccessException):
 
 
 def get_entity_by_cpf_cnpj(
-    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str = None
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str = None, raise_error=False
 ) -> models.Entity:
     if api_key:
         check_api_key(db, api_key=api_key)
 
     db_entity = db.query(models.Entity).get(cpf_cnpj)
     if not db_entity:
-        raise DoesNotExisit("Entity does not exist")
+        if raise_error:
+            raise DoesNotExisit("Entity does not exist")
+        return None
 
     return db_entity
 

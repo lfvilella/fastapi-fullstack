@@ -5,38 +5,60 @@ import typing
 import datetime
 
 
+class CpfOrCnpj(str):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, str):
+            raise TypeError("string required")
+
+        cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
+        if not (cpf.validate(v) or cnpj.validate(v)):
+            raise TypeError("Invalid CPF / CNPJ")
+
+        return "".join(filter(str.isdigit, v))
+
+    def __repr__(self):
+        return f"CpfOrCnpj({super().__repr__()})"
+
+
 class EntityTypeEnum(str, enum.Enum):
     pj = "pj"
     pf = "pf"
 
 
-class Entity(pydantic.BaseModel):
+class EntityBase(pydantic.BaseModel):
     class Config:
         orm_mode = True
 
     name: str
-    type_entity: EntityTypeEnum
-    cpf_cnpj: str
+    cpf_cnpj: CpfOrCnpj
 
-    @pydantic.validator("cpf_cnpj")
-    def validate_cpf_cnpj(cls, v, values):
-        if "type_entity" not in values:
-            raise ValueError("Entity Type is not defined")
+
+class Entity(EntityBase):
+    type_entity: typing.Optional[EntityTypeEnum] = None
+
+    @pydantic.validator("type_entity", pre=True, always=True)
+    def validate_type_entity(cls, v, values):
+        if "cpf_cnpj" not in values:
+            return None
+
+        cpf_cnpj = values["cpf_cnpj"]
 
         cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
-        if values["type_entity"] == EntityTypeEnum.pj:
-            if not cnpj.validate(v):
-                raise ValueError("Invalid CNPJ")
+        if cpf.validate(cpf_cnpj):
+            return EntityTypeEnum.pf
 
-            return "".join(filter(str.isdigit, v))
+        if cnpj.validate(cpf_cnpj):
+            return EntityTypeEnum.pj
 
-        if not cpf.validate(v):
-            raise ValueError("Invalid CPF")
-
-        return "".join(filter(str.isdigit, v))
+        return None
 
 
-class EntityCreate(Entity):
+class EntityCreate(EntityBase):
     password: str
 
 
@@ -45,15 +67,11 @@ class ChargeCreate(pydantic.BaseModel):
         orm_mode = True
 
     debtor: Entity
-    creditor_cpf_cnpj: str
+    creditor_cpf_cnpj: CpfOrCnpj
     debito: pydantic.PositiveFloat
 
     @pydantic.validator("creditor_cpf_cnpj")
     def validate_creditor_cpf_cnpj(cls, v, values):
-        cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
-        if not (cpf.validate(v) or cnpj.validate(v)):
-            raise ValueError("Invalid CPF / CNPJ")
-
         if "debtor" not in values:
             raise ValueError("Debtor not found")
 
@@ -70,8 +88,8 @@ class ChargeDatabase(pydantic.BaseModel):
         orm_mode = True
 
     id: str
-    debtor_cpf_cnpj: str
-    creditor_cpf_cnpj: str
+    debtor_cpf_cnpj: CpfOrCnpj
+    creditor_cpf_cnpj: CpfOrCnpj
     debito: pydantic.PositiveFloat
     is_active: bool
     created_at: datetime.datetime
@@ -79,21 +97,21 @@ class ChargeDatabase(pydantic.BaseModel):
 
 
 class ChargeFilter(pydantic.BaseModel):
-    debtor_cpf_cnpj: typing.Optional[str] = None
-    creditor_cpf_cnpj: typing.Optional[str] = None
+    debtor_cpf_cnpj: typing.Optional[CpfOrCnpj] = None
+    creditor_cpf_cnpj: typing.Optional[CpfOrCnpj] = None
     is_active: typing.Optional[bool] = None
 
 
 class ChargePayment(pydantic.BaseModel):
     id: str
-    creditor_cpf_cnpj: str
+    creditor_cpf_cnpj: CpfOrCnpj
 
 
 class Authenticate(pydantic.BaseModel):
-    cpf_cnpj: str
+    cpf_cnpj: CpfOrCnpj
     password: str
 
 
 class APIKey(pydantic.BaseModel):
     api_key: str
-    cpf_cnpj: str
+    cpf_cnpj: CpfOrCnpj
