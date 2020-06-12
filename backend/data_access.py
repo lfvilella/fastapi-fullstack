@@ -1,6 +1,7 @@
 import sqlalchemy.orm
 import typing
 import uuid
+import datetime
 from . import models, schemas
 
 
@@ -12,17 +13,17 @@ def get_entity_by_cpf_cnpj(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.
 
 
 def create_entity(
-    db: sqlalchemy.orm.Session, entity: schemas.EntityCreate, persist: bool = True
+    db: sqlalchemy.orm.Session, entity: schemas.Entity, persist: bool = True
 ) -> models.Entity:
+
     entity_data = entity.dict()
-    password = entity_data.pop("password")
 
     db_entity = models.Entity(**entity_data)
     db.add(db_entity)
     if persist:
         db.commit()
 
-    db.refresh(db_entity)
+    db.flush()
     return db_entity
 
 
@@ -76,8 +77,26 @@ def create_charge(
         creditor_cpf_cnpj=creditor_db.cpf_cnpj,
         debito=charge.debito,
         is_active=True,
+        created_at=datetime.datetime.utcnow(),
     )
     db.add(db_charge)
     db.commit()
-    db.refresh(db_charge)
+    return db_charge
+
+
+def payment_charge(
+    db: sqlalchemy.orm.Session, payment_info: schemas.ChargePayment
+) -> models.Charge:
+    db_charge = get_charge_by_id(db, payment_info.id)
+
+    if not db_charge:
+        raise ValueError("Charge not found to pay")
+
+    if db_charge.creditor_cpf_cnpj != payment_info.creditor_cpf_cnpj:
+        raise ValueError("CPF/CNPJ is not the same on charge")
+
+    db_charge.payed_at = datetime.datetime.utcnow()
+    db_charge.is_active = False
+    db.add(db_charge)
+    db.commit()
     return db_charge

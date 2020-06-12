@@ -35,3 +35,5 @@ class Charge(Base):
     )
     debito = sqlalchemy.Column(sqlalchemy.Float)
     is_active = sqlalchemy.Column(sqlalchemy.Boolean)
+    created_at = sqlalchemy.Column(sqlalchemy.DateTime)
+    payed_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True, default=None)

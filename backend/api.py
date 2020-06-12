@@ -56,8 +56,6 @@ def filter_entity(
 def create_charge(
     charge: schemas.ChargeCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
 ):
-    schema_charge = schemas
-
     return data_access.create_charge(db=db, charge=charge)
 
 
@@ -87,3 +85,14 @@ def filter_charge(
         raise fastapi.HTTPException(status_code=404, detail="Charge not found")
 
     return charges
+
+
+@app.post(_VERSION + "/charge/payment", response_model=schemas.ChargeDatabase)
+def charge_payment(
+    payment_info: schemas.ChargePayment,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+    
+    try:
+        return data_access.payment_charge(db, payment_info)
+    except ValueError as error:
+        raise fastapi.HTTPException(status_code=400, detail=str(error))

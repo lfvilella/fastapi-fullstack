@@ -2,6 +2,7 @@ import pydantic
 import enum
 import validate_docbr
 import typing
+import datetime
 
 
 class EntityTypeEnum(str, enum.Enum):
@@ -73,12 +74,16 @@ class ChargeDatabase(pydantic.BaseModel):
     creditor_cpf_cnpj: str
     debito: pydantic.PositiveFloat
     is_active: bool
+    created_at: datetime.datetime
+    payed_at: datetime.datetime = None
 
 
 class ChargeFilter(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
-
     debtor_cpf_cnpj: typing.Optional[str] = None
     creditor_cpf_cnpj: typing.Optional[str] = None
     is_active: typing.Optional[bool] = None
+
+
+class ChargePayment(pydantic.BaseModel):
+    id: str
+    creditor_cpf_cnpj: str
