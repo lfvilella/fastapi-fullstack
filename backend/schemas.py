@@ -52,12 +52,12 @@ class ChargeCreate(pydantic.BaseModel):
         cpf, cnpj = validate_docbr.CPF(), validate_docbr.CNPJ()
         if not (cpf.validate(v) or cnpj.validate(v)):
             raise ValueError("Invalid CPF / CNPJ")
-        
-        if 'debtor' not in values:
+
+        if "debtor" not in values:
             raise ValueError("Debtor not found")
 
-        debtor_cpf_cnpj = values['debtor'].cpf_cnpj
-        creditor_cpf_cnpj = ''.join(filter(str.isdigit, v))
+        debtor_cpf_cnpj = values["debtor"].cpf_cnpj
+        creditor_cpf_cnpj = "".join(filter(str.isdigit, v))
         if debtor_cpf_cnpj == creditor_cpf_cnpj:
             raise ValueError("You can not add debt for yourself")
 

@@ -20,8 +20,9 @@ def get_db():
 
 
 @app.post(_VERSION + "/entity", response_model=schemas.Entity)
-def create_entity(entity: schemas.EntityCreate,
-                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+def create_entity(
+    entity: schemas.EntityCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+):
     db_entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=entity.cpf_cnpj)
     if db_entity:
         raise fastapi.HTTPException(status_code=400, detail="Entity alredy exist")
@@ -39,9 +40,11 @@ def read_entity(cpf_cnpj: str, db: sqlalchemy.orm.Session = fastapi.Depends(get_
 
 
 @app.get(_VERSION + "/entity", response_model=typing.List[schemas.Entity])
-def filter_entity(type_entity: schemas.EntityTypeEnum = None,
-                  limit: int = 100,
-                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+def filter_entity(
+    type_entity: schemas.EntityTypeEnum = None,
+    limit: int = 100,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+):
     entities = data_access.filter_entity_by_type(db, type_entity, limit)
     if not entities:
         raise fastapi.HTTPException(status_code=404, detail="Entities not found")
@@ -50,12 +53,12 @@ def filter_entity(type_entity: schemas.EntityTypeEnum = None,
 
 
 @app.post(_VERSION + "/charge", response_model=schemas.ChargeDatabase)
-def create_charge(charge: schemas.ChargeCreate,
-                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
+def create_charge(
+    charge: schemas.ChargeCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+):
     schema_charge = schemas
-    
-    return data_access.create_charge(db=db, charge=charge)
 
+    return data_access.create_charge(db=db, charge=charge)
 
 
 @app.get(_VERSION + "/charge/{charge_id}", response_model=schemas.ChargeDatabase)
@@ -68,13 +71,17 @@ def read_charge(charge_id: str, db: sqlalchemy.orm.Session = fastapi.Depends(get
 
 
 @app.get(_VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase])
-def filter_charge(debtor_cpf_cnpj: str = None,
-                  creditor_cpf_cnpj: str = None,
-                  is_active: bool = None,
-                  db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
-    charge_filter = schemas.ChargeFilter(debtor_cpf_cnpj=debtor_cpf_cnpj,
-                                         creditor_cpf_cnpj=creditor_cpf_cnpj,
-                                         is_active=is_active)
+def filter_charge(
+    debtor_cpf_cnpj: str = None,
+    creditor_cpf_cnpj: str = None,
+    is_active: bool = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+):
+    charge_filter = schemas.ChargeFilter(
+        debtor_cpf_cnpj=debtor_cpf_cnpj,
+        creditor_cpf_cnpj=creditor_cpf_cnpj,
+        is_active=is_active,
+    )
     charges = data_access.filter_charge(db, charge_filter=charge_filter)
     if not charges:
         raise fastapi.HTTPException(status_code=404, detail="Charge not found")
