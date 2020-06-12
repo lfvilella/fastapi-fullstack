@@ -59,9 +59,14 @@ def filter_entity(
 
 @app.post(_VERSION + "/charge", response_model=schemas.ChargeDatabase)
 def create_charge(
-    charge: schemas.ChargeCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+    charge: schemas.ChargeCreate, api_key: str = None, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
 ):
-    return data_access.create_charge(db=db, charge=charge)
+    try:
+        return data_access.create_charge(db=db, charge=charge, api_key=api_key)
+    except data_access.APIKeyNotFound:
+        raise fastapi.HTTPException(status_code=403)
+    except data_access.ValidationError as error:
+        raise fastapi.HTTPException(status_code=400, detail=str(error))
 
 
 @app.get(_VERSION + "/charge/{charge_id}", response_model=schemas.ChargeDatabase)

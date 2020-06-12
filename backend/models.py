@@ -50,7 +50,7 @@ class EntityAPIKey(Base):
         index=True,
         default=lambda: str(uuid.uuid4()),
     )
-    entity_cpf_cnpj = sqlalchemy.Column(
+    cpf_cnpj = sqlalchemy.Column(
         sqlalchemy.String, sqlalchemy.ForeignKey("entities.cpf_cnpj")
     )
     created_at = sqlalchemy.Column(sqlalchemy.DateTime)
