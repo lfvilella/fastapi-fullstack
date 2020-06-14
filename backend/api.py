@@ -135,3 +135,16 @@ def authenticate_login(
 
     api_key = data_access.create_api_key(db, cpf_cnpj=entity.cpf_cnpj)
     return schemas.APIKey(api_key=api_key.id, cpf_cnpj=entity.cpf_cnpj)
+
+
+@app.delete(_VERSION + "/authenticate/logout", response_model=schemas.Logout)
+def authenticate_logout(
+    logout: schemas.Logout,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
+):
+    entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=logout.cpf_cnpj)
+    if not entity:
+        raise fastapi.HTTPException(status_code=400, detail="Invalid Credencials")
+
+    api_key = data_access.delete_api_key(db, cpf_cnpj_filter=entity.cpf_cnpj)
+    return schemas.Logout(cpf_cnpj=entity.cpf_cnpj)

@@ -104,13 +104,25 @@ def entity_set_password(
 
 
 def create_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
-
     db_api_key = models.APIKey(
         cpf_cnpj=cpf_cnpj, created_at=datetime.datetime.utcnow(),
     )
     db.add(db_api_key)
     db.commit()
     return db_api_key
+
+
+def delete_api_key(db: sqlalchemy.orm.Session, cpf_cnpj_filter: str) -> models.APIKey:
+    filter_api_key = db.query(models.APIKey).filter_by(cpf_cnpj=cpf_cnpj_filter).all()
+
+    if not filter_api_key:
+        raise DoesNotExisit("APIKey does not exist")
+
+    for item in filter_api_key:
+        db.delete(item)
+    
+    db.commit()
+    return filter_api_key
 
 
 def check_api_key(db: sqlalchemy.orm.Session, api_key: str):
