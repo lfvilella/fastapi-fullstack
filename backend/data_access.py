@@ -34,7 +34,8 @@ def get_entity_by_cpf_cnpj(
     if not db_entity:
         if raise_error:
             raise DoesNotExisit("Entity does not exist")
-        return None
+        
+        raise ValidationError("Invalid Credencials")
 
     return db_entity
 
@@ -44,7 +45,7 @@ def get_entity_by_cpf_cnpj_and_password(
 ) -> models.Entity:
     entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
     if not entity:
-        return None
+        raise ValidationError("Invalid Credencials")
 
     if not security.verify_password(password, entity.hashed_password):
         return None
