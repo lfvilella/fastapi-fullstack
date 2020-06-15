@@ -113,8 +113,13 @@ def create_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
     return db_api_key
 
 
-def delete_api_key(db: sqlalchemy.orm.Session, cpf_cnpj_filter: str) -> models.APIKey:
+def delete_api_key(db: sqlalchemy.orm.Session, cpf_cnpj_filter: str, api_key: str) -> models.APIKey:
+    db_api_key = check_api_key(db, api_key=api_key)
+    
     filter_api_key = db.query(models.APIKey).filter_by(cpf_cnpj=cpf_cnpj_filter).all()
+
+    if db_api_key.cpf_cnpj != cpf_cnpj_filter:
+        raise ValidationError("Invalid Credencials")
 
     if not filter_api_key:
         raise DoesNotExisit("APIKey does not exist")

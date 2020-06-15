@@ -138,9 +138,12 @@ def authenticate_login(
 @app.delete(_VERSION + "/authenticate/logout", response_model=schemas.Logout)
 def authenticate_logout(
     logout: schemas.Logout,
+    api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
 ):
-    entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=logout.cpf_cnpj)
+    entity = data_access.get_entity_by_cpf_cnpj(
+        db, cpf_cnpj=logout.cpf_cnpj, api_key=api_key
+    )
 
-    api_key = data_access.delete_api_key(db, cpf_cnpj_filter=entity.cpf_cnpj)
+    delete_api_key = data_access.delete_api_key(db, cpf_cnpj_filter=entity.cpf_cnpj, api_key=api_key)
     return schemas.Logout(cpf_cnpj=entity.cpf_cnpj)
