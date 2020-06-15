@@ -129,11 +129,8 @@ dmypy.json
 .pyre/
 
 
-# Local folder
-basic_tutorial
-sql_app
+# Local
 sql_app.db
 
-django/djvenv
 *.vscode
 .DS_Store
