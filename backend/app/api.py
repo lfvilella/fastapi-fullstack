@@ -43,23 +43,14 @@ def handle_data_access_error(
 def create_entity(
     entity: schemas.EntityCreate, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
 ):
-    db_entity = data_access.get_entity_by_cpf_cnpj(db, cpf_cnpj=entity.cpf_cnpj)
-    if db_entity:
-        raise fastapi.HTTPException(status_code=400, detail="Entity alredy exist")
-
-    db_entity = data_access.create_entity(
-        db=db, entity=schemas.Entity(**entity.dict()), persist=False
+    return data_access.create_entity(
+        db, entity=schemas.Entity(**entity.dict()), password=entity.password,
     )
-    data_access.entity_set_password(
-        db=db, cpf_cnpj=entity.cpf_cnpj, password=entity.password, persist=False
-    )
-    db.commit()
-    return db_entity
 
 
 @app.get(_VERSION + "/entity/{cpf_cnpj}", response_model=schemas.Entity)
 def read_entity(
-    cpf_cnpj: str,
+    cpf_cnpj: schemas.CpfOrCnpj,
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):

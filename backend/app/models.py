@@ -1,6 +1,7 @@
 import sqlalchemy
 import sqlalchemy.orm
 import uuid
+import datetime
 
 from .database import Base
 
@@ -57,4 +58,6 @@ class APIKey(Base):
         default=None,
     )
     is_admin = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
-    created_at = sqlalchemy.Column(sqlalchemy.DateTime)
+    created_at = sqlalchemy.Column(
+        sqlalchemy.DateTime, default=datetime.datetime.utcnow
+    )

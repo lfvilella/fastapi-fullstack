@@ -25,9 +25,13 @@ class DoesNotExisit(DataAccessException):
 
 
 def get_entity_by_cpf_cnpj(
-    db: sqlalchemy.orm.Session, cpf_cnpj: str, api_key: str = None, raise_error=False
+    db: sqlalchemy.orm.Session,
+    cpf_cnpj: str,
+    api_key: str = None,
+    validate_api_key=True,
+    raise_error=False,
 ) -> models.Entity:
-    if api_key:
+    if validate_api_key or api_key:
         check_api_key(db, api_key=api_key)
 
     db_entity = db.query(models.Entity).get(cpf_cnpj)
@@ -54,11 +58,27 @@ def get_entity_by_cpf_cnpj_and_password(
 
 
 def create_entity(
-    db: sqlalchemy.orm.Session, entity: schemas.Entity, persist: bool = True
+    db: sqlalchemy.orm.Session,
+    entity: schemas.Entity,
+    password: bool = None,
+    persist: bool = True,
 ) -> models.Entity:
+
+    if get_entity_by_cpf_cnpj(db, cpf_cnpj=entity.cpf_cnpj, validate_api_key=False):
+        raise ValidationError("Entity already exist")
 
     db_entity = models.Entity(**entity.dict())
     db.add(db_entity)
+
+    if password:
+        entity_set_password(
+            db=db,
+            cpf_cnpj=entity.cpf_cnpj,
+            password=password,
+            entity=db_entity,
+            persist=False,
+        )
+
     if persist:
         db.commit()
 
@@ -87,9 +107,13 @@ def filter_entity_by_type(
 
 
 def entity_set_password(
-    db: sqlalchemy.orm.Session, cpf_cnpj: str, password: str, persist=True
+    db: sqlalchemy.orm.Session,
+    cpf_cnpj: str,
+    password: str,
+    entity: models.Entity = None,
+    persist=True,
 ) -> models.Entity:
-    entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
+    entity = entity or get_entity_by_cpf_cnpj(db, cpf_cnpj)
 
     if not entity:
         raise DoesNotExisit("Entity does not exist")

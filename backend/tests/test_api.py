@@ -1,4 +1,5 @@
 import pytest
+import collections
 from fastapi.testclient import TestClient
 
 from app import api
@@ -8,15 +9,19 @@ from app import security
 client = TestClient(api.app)
 
 
+@pytest.fixture
+def payload():
+    return {"name": "root", "cpf_cnpj": "80962607401", "password": "123"}
+
+
 @pytest.mark.usefixtures("use_db")
 class TestCreateEntity:
-    @pytest.fixture
-    def payload(self):
-        return {"name": "root", "cpf_cnpj": "80962607401", "password": "123"}
-
-    def test_when_valid_post_returns_valid_response(self, payload):
+    def test_when_valid_post_returns_ok(self, payload):
         response = client.post("/v.1/entity", json=payload)
         assert response.status_code == 200
+
+    def test_when_valid_post_returns_complete_body(self, payload):
+        response = client.post("/v.1/entity", json=payload)
         assert response.json() == {
             "name": "root",
             "cpf_cnpj": "80962607401",
@@ -35,16 +40,78 @@ class TestCreateEntity:
         assert payload["name"] == db_entity.name
         assert payload["cpf_cnpj"] == db_entity.cpf_cnpj
 
-    def test_when_invalid_post_returns_422(self):
+    def test_when_invalid_cpf_cnpj_post_returns_invalid_cpf_cnpj(self, payload):
+        payload["cpf_cnpj"] = "12345678910"
+        response = client.post("/v.1/entity", json=payload)
+        assert response.ok == False
+        assert response.json() == {
+            "detail": [
+                {
+                    "loc": ["body", "entity", "cpf_cnpj"],
+                    "msg": "Invalid CPF / CNPJ",
+                    "type": "type_error",
+                }
+            ]
+        }
+
+    def test_when_empity_post_returns_unprocessable_entity(self):
         response = client.post("/v.1/entity", json={})
         assert response.status_code == 422
 
+    def test_when_existing_post_returns_bad_request(self, payload):
+        response = client.post("/v.1/entity", json=payload)
+        response = client.post("/v.1/entity", json=payload)
+        assert response.status_code == 400
+        assert response.json() == {"detail": "Entity already exist"}
 
-# def test_create_entity_existing(use_db):
-#     response = client.post(
-#         "/v.1/entity",
-#         headers={"Content-Type": "application/json"},
-#         json={"name": "root", "cpf_cnpj": "80962607401", "password": "123"},
-#     )
-#     assert response.status_code == 400
-#     assert response.json() == {"detail": "Entity alredy exist"}
+
+class TestApiKey:
+    def build_url(self, *args, **kwargs):
+        raise NotImplemented
+
+
+@pytest.mark.usefixtures("use_db")
+class TestReadEntity:
+    @pytest.fixture
+    def create_db_entity(self, payload, db_session):
+        entity = models.Entity(cpf_cnpj="80962607401", type_entity="pf", name="root",)
+        db_session.add(entity)
+
+        api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
+        db_session.add(api_key)
+
+        db_session.flush()
+        db_session.commit()
+
+        DB_info = collections.namedtuple("DB_info", "entity api_key")
+        return DB_info(entity=entity, api_key=api_key)
+
+    def build_url(self, cpf_cnpj, api_key=None):
+        return f"/v.1/entity/{cpf_cnpj}?api_key={api_key}"
+
+    def test_when_api_key_is_empty_returns_forbidden(self, payload):
+        request = client.get(self.build_url(payload["cpf_cnpj"], ""))
+        assert request.status_code == 403
+
+    def test_when_valid_get_returns_ok(self, create_db_entity):
+        request = client.get(
+            self.build_url(
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+            )
+        )
+        assert request.status_code == 200
+
+    def test_when_valid_get_returns_complete_body(self, create_db_entity):
+        request = client.get(f"/v.1/entity/{create_db_entity.entity.cpf_cnpj}")
+        assert request.json() == {
+            "name": create_db_entity.entity.name,
+            "cpf_cnpj": create_db_entity.entity.cpf_cnpj,
+            "type_entity": create_db_entity.entity.type_entity,
+        }
+
+    # def test_when_valid_get_is_same_info_on_db(self, payload, db_session):
+    #     response = client.post("/v.1/entity", json=payload)
+    #     request = client.get(f"/v.1/entity/{payload['cpf_cnpj']}")
+    #     db_entity = db_session.query(models.Entity).first()
+    #     payload = payload.pop("password")
+    #     assert db_entity == request.json()
