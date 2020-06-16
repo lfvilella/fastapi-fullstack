@@ -214,8 +214,12 @@ def create_charge(
 
     db_api_key = check_api_key(db, api_key=api_key)
 
-    debtor_db = get_entity_by_cpf_cnpj(db, charge.debtor.cpf_cnpj)
-    creditor_db = get_entity_by_cpf_cnpj(db, charge.creditor_cpf_cnpj)
+    debtor_db = get_entity_by_cpf_cnpj(
+        db, charge.debtor.cpf_cnpj, validate_api_key=False
+    )
+    creditor_db = get_entity_by_cpf_cnpj(
+        db, charge.creditor_cpf_cnpj, validate_api_key=False
+    )
 
     if creditor_db.cpf_cnpj != db_api_key.cpf_cnpj:
         raise ValidationError("CPF / CNPJ is not the same as the creditor")

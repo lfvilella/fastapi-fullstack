@@ -66,7 +66,7 @@ class ChargeCreate(pydantic.BaseModel):
     class Config:
         orm_mode = True
 
-    debtor: Entity
+    debtor: EntityBase
     creditor_cpf_cnpj: CpfOrCnpj
     debito: pydantic.PositiveFloat
 
