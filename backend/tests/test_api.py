@@ -6,6 +6,7 @@ from app import api
 from app import models
 from app import security
 
+
 client = TestClient(api.app)
 
 
@@ -40,7 +41,7 @@ class TestCreateEntity:
         assert payload["name"] == db_entity.name
         assert payload["cpf_cnpj"] == db_entity.cpf_cnpj
 
-    def test_when_invalid_cpf_cnpj_post_returns_invalid_cpf_cnpj(self, payload):
+    def test_when_invalid_cpf_cnpj_post_returns_error_invalid_cpf_cnpj(self, payload):
         payload["cpf_cnpj"] = "12345678910"
         response = client.post("/v.1/entity", json=payload)
         assert response.ok == False
@@ -63,11 +64,6 @@ class TestCreateEntity:
         response = client.post("/v.1/entity", json=payload)
         assert response.status_code == 400
         assert response.json() == {"detail": "Entity already exist"}
-
-
-class TestApiKey:
-    def build_url(self, *args, **kwargs):
-        raise NotImplemented
 
 
 @pytest.mark.usefixtures("use_db")
@@ -102,16 +98,39 @@ class TestReadEntity:
         assert request.status_code == 200
 
     def test_when_valid_get_returns_complete_body(self, create_db_entity):
-        request = client.get(f"/v.1/entity/{create_db_entity.entity.cpf_cnpj}")
+        request = client.get(
+            self.build_url(
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+            )
+        )
         assert request.json() == {
             "name": create_db_entity.entity.name,
             "cpf_cnpj": create_db_entity.entity.cpf_cnpj,
             "type_entity": create_db_entity.entity.type_entity,
         }
 
-    # def test_when_valid_get_is_same_info_on_db(self, payload, db_session):
-    #     response = client.post("/v.1/entity", json=payload)
-    #     request = client.get(f"/v.1/entity/{payload['cpf_cnpj']}")
-    #     db_entity = db_session.query(models.Entity).first()
-    #     payload = payload.pop("password")
-    #     assert db_entity == request.json()
+    def test_when_valid_get_is_same_info_on_db(self, create_db_entity, db_session):
+        request = client.get(
+            self.build_url(
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+            )
+        )
+        db_entity = db_session.query(models.Entity).first()
+        assert request.json() == {
+            "name": db_entity.name,
+            "cpf_cnpj": db_entity.cpf_cnpj,
+            "type_entity": db_entity.type_entity,
+        }
+
+    def test_when_get_with_invalid_cpf_cnpj(self, create_db_entity):
+        request = client.get(self.build_url("1234567891-011", create_db_entity.api_key.id))
+        assert request.ok == False
+        assert request.json() == {
+            "detail": [
+                {
+                    "loc": ["path", "cpf_cnpj"],
+                    "msg": "Invalid CPF / CNPJ",
+                    "type": "type_error",
+                }
+            ]
+        }
