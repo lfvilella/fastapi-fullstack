@@ -1,8 +1,7 @@
 import os
 import unittest.mock
 import pytest
-
-import app.database
+import app.models
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -16,19 +15,19 @@ def use_db():
     )
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+    app.models.Base.metadata.create_all(engine)
+    session = SessionLocal()
+
     with unittest.mock.patch("app.database.engine", engine):
-        with unittest.mock.patch("app.database.SessionLocal", SessionLocal):
-            app.models.Base.metadata.create_all(app.database.engine)
-            yield
-            app.models.Base.metadata.drop_all(app.database.engine)
-            if os.path.exists(db_path):
-                os.remove(db_path)
+        with unittest.mock.patch("app.database.SessionLocal", return_value=session):
+            yield session
+            session.close()
+
+    app.models.Base.metadata.drop_all(engine)
+    if os.path.exists(db_path):
+        os.remove(db_path)
 
 
 @pytest.fixture
 def db_session(use_db):
-    session = app.database.SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
+    return use_db

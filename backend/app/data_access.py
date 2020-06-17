@@ -242,7 +242,6 @@ def create_charge(
 def payment_charge(
     db: sqlalchemy.orm.Session, payment_info: schemas.ChargePayment, api_key: str
 ) -> models.Charge:
-
     db_api_key = check_api_key(db, api_key=api_key)
 
     db_charge = get_charge_by_id(db, charge_id=payment_info.id, api_key=api_key)

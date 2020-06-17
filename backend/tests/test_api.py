@@ -293,7 +293,9 @@ class TestPayment:
         )
         assert response.status_code == 200
 
-    def test_when_valid_payment_post_returns_complete_body(self, payload, create_db_charge):
+    def test_when_valid_payment_post_returns_complete_body(
+        self, payload, create_db_charge
+    ):
         response = client.post(
             self.build_url(create_db_charge.api_key.id),
             json={
@@ -301,13 +303,43 @@ class TestPayment:
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
             },
         )
-        assert response.json().pop('id') == create_db_charge.charge.id
-        assert response.json().pop('debtor_cpf_cnpj') == create_db_charge.charge.debtor_cpf_cnpj
-        assert response.json().pop('debito') == create_db_charge.charge.debito
-        assert response.json().pop('is_active') == False
+        data = response.json()
+        assert data.get("id") == create_db_charge.charge.id
+        assert (
+            data.get("debtor_cpf_cnpj")
+            == create_db_charge.charge.debtor_cpf_cnpj
+        )
+        assert data.get("creditor_cpf_cnpj") == payload["cpf_cnpj"]
+        assert data.get("debito") == create_db_charge.charge.debito
+        assert data.get("is_active") == False
 
         # Check only YY/MM/DD
-        assert response.json().pop('created_at')[:10:] == str(create_db_charge.charge.created_at).replace(' ','')[:10:]
-        
-        payed_at = str(datetime.datetime.utcnow()).replace(' ','')
-        assert response.json().pop('payed_at')[:10:] == payed_at[:10:]
+        assert (
+            data.get("created_at")[:10:]
+            == str(create_db_charge.charge.created_at).replace(" ", "")[:10:]
+        )
+
+        payed_at = str(datetime.datetime.utcnow()).replace(" ", "")
+        assert data.pop("payed_at")[:10:] == payed_at[:10:]
+
+    def test_when_valid_payment_post_saves_on_db(self, create_db_charge, db_session):
+        assert db_session.query(models.Charge).count() == 1
+        response = client.post(
+            self.build_url(create_db_charge.api_key.id),
+            json={
+                "id": create_db_charge.charge.id,
+                "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
+            },
+        )
+        assert db_session.query(models.Charge).count() == 1
+
+        db_charge = db_session.query(models.Charge).first()
+        assert response.json() == {
+            "id": db_charge.id,
+            "debtor_cpf_cnpj": db_charge.debtor_cpf_cnpj,
+            "creditor_cpf_cnpj": db_charge.creditor_cpf_cnpj,
+            "debito": db_charge.debito,
+            "created_at": db_charge.created_at.isoformat(),
+            "is_active": db_charge.is_active,
+            "payed_at": db_charge.payed_at.isoformat(),
+        }
