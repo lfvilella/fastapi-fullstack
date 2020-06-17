@@ -47,7 +47,7 @@ def get_entity_by_cpf_cnpj(
 def get_entity_by_cpf_cnpj_and_password(
     db: sqlalchemy.orm.Session, cpf_cnpj: str, password: str
 ) -> models.Entity:
-    entity = get_entity_by_cpf_cnpj(db, cpf_cnpj)
+    entity = get_entity_by_cpf_cnpj(db, cpf_cnpj, validate_api_key=False)
     if not entity:
         raise ValidationError("Invalid Credencials")
 

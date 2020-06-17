@@ -231,3 +231,83 @@ class TestCreateCharge:
             response.json().get("detail").pop(0).pop("msg")
             == "You can not add debt for yourself"
         )
+
+    def test_when_zero_debt_post_returns_error(self, payload_charge, create_db_entity):
+        payload_charge["debito"] = 0
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert (
+            response.json().get("detail").pop(0).pop("msg")
+            == "ensure this value is greater than 0"
+        )
+
+    def test_when_negative_debt_post_returns_error(
+        self, payload_charge, create_db_entity
+    ):
+        payload_charge["debito"] = -100
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert (
+            response.json().get("detail").pop(0).pop("msg")
+            == "ensure this value is greater than 0"
+        )
+
+
+@pytest.mark.usefixtures("use_db")
+class TestPayment:
+    @pytest.fixture
+    def create_db_charge(self, payload, db_session):
+        db_charge = models.Charge(
+            debtor_cpf_cnpj="03497961786765",
+            creditor_cpf_cnpj=payload["cpf_cnpj"],
+            debito=100,
+            is_active=True,
+            created_at=datetime.datetime.utcnow(),
+            payed_at=None,
+        )
+        db_session.add(db_charge)
+
+        api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
+        db_session.add(api_key)
+
+        db_session.flush()
+        db_session.commit()
+
+        DB_info = collections.namedtuple("DB_info", "charge api_key")
+        return DB_info(charge=db_charge, api_key=api_key)
+
+    def build_url(self, api_key=None):
+        return f"/v.1/charge/payment?api_key={api_key}"
+
+    def test_when_valid_payment_post_returns_ok(self, create_db_charge):
+        response = client.post(
+            self.build_url(create_db_charge.api_key.id),
+            json={
+                "id": create_db_charge.charge.id,
+                "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
+            },
+        )
+        assert response.status_code == 200
+
+    def test_when_valid_payment_post_returns_complete_body(self, payload, create_db_charge):
+        response = client.post(
+            self.build_url(create_db_charge.api_key.id),
+            json={
+                "id": create_db_charge.charge.id,
+                "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
+            },
+        )
+        assert response.json().pop('id') == create_db_charge.charge.id
+        assert response.json().pop('debtor_cpf_cnpj') == create_db_charge.charge.debtor_cpf_cnpj
+        assert response.json().pop('debito') == create_db_charge.charge.debito
+        assert response.json().pop('is_active') == False
+
+        # Check only YY/MM/DD
+        assert response.json().pop('created_at')[:10:] == str(create_db_charge.charge.created_at).replace(' ','')[:10:]
+        
+        payed_at = str(datetime.datetime.utcnow()).replace(' ','')
+        assert response.json().pop('payed_at')[:10:] == payed_at[:10:]
