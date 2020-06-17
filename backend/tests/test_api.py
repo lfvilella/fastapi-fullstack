@@ -30,12 +30,12 @@ class TestCreateEntity:
             "type_entity": "pf",
         }
 
-    def test_when_valid_post_saves_on_db(self, payload, db_session):
+    def test_when_valid_post_saves_on_db(self, payload, session_maker):
         response = client.post("/v.1/entity", json=payload)
 
-        assert db_session.query(models.Entity).count() == 1
+        assert session_maker().query(models.Entity).count() == 1
 
-        db_entity = db_session.query(models.Entity).first()
+        db_entity = session_maker().query(models.Entity).first()
         assert True == security.verify_password(
             payload["password"], db_entity.hashed_password
         )
@@ -60,15 +60,16 @@ class TestCreateEntity:
 
 
 @pytest.fixture
-def create_db_entity(payload, db_session):
-    entity = models.Entity(cpf_cnpj="80962607401", type_entity="pf", name="root",)
-    db_session.add(entity)
+def create_db_entity(payload, session_maker):
+    entity = models.Entity(cpf_cnpj="80962607401", type_entity="pf", name="root")
+    session = session_maker()
+    session.add(entity)
 
     api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
-    db_session.add(api_key)
+    session.add(api_key)
 
-    db_session.flush()
-    db_session.commit()
+    session.flush()
+    session.commit()
 
     DB_info = collections.namedtuple("DB_info", "entity api_key")
     return DB_info(entity=entity, api_key=api_key)
@@ -103,13 +104,13 @@ class TestReadEntity:
             "type_entity": create_db_entity.entity.type_entity,
         }
 
-    def test_when_valid_get_is_same_info_on_db(self, create_db_entity, db_session):
+    def test_when_valid_get_is_same_info_on_db(self, create_db_entity, session_maker):
         request = client.get(
             self.build_url(
                 create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
             )
         )
-        db_entity = db_session.query(models.Entity).first()
+        db_entity = session_maker().query(models.Entity).first()
         assert request.json() == {
             "name": db_entity.name,
             "cpf_cnpj": db_entity.cpf_cnpj,
@@ -165,15 +166,15 @@ class TestCreateCharge:
         assert response.json().pop("payed_at") == None
 
     def test_when_valid_post_saves_on_db(
-        self, payload_charge, create_db_entity, db_session
+        self, payload_charge, create_db_entity, session_maker
     ):
         response = client.post(
             self.build_url(create_db_entity.api_key.id), json=payload_charge
         )
 
-        assert db_session.query(models.Charge).count() == 1
+        assert session_maker().query(models.Charge).count() == 1
 
-        db_charge = db_session.query(models.Charge).first()
+        db_charge = session_maker().query(models.Charge).first()
         assert db_charge.debtor_cpf_cnpj == payload_charge["debtor"]["cpf_cnpj"]
         assert db_charge.creditor_cpf_cnpj == payload_charge["creditor_cpf_cnpj"]
         assert db_charge.debito == payload_charge["debito"]
@@ -260,7 +261,7 @@ class TestCreateCharge:
 @pytest.mark.usefixtures("use_db")
 class TestPayment:
     @pytest.fixture
-    def create_db_charge(self, payload, db_session):
+    def create_db_charge(self, payload, session_maker):
         db_charge = models.Charge(
             debtor_cpf_cnpj="03497961786765",
             creditor_cpf_cnpj=payload["cpf_cnpj"],
@@ -269,13 +270,14 @@ class TestPayment:
             created_at=datetime.datetime.utcnow(),
             payed_at=None,
         )
-        db_session.add(db_charge)
+        session = session_maker()
+        session.add(db_charge)
 
         api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
-        db_session.add(api_key)
+        session.add(api_key)
 
-        db_session.flush()
-        db_session.commit()
+        session.flush()
+        session.commit()
 
         DB_info = collections.namedtuple("DB_info", "charge api_key")
         return DB_info(charge=db_charge, api_key=api_key)
@@ -322,8 +324,8 @@ class TestPayment:
         payed_at = str(datetime.datetime.utcnow()).replace(" ", "")
         assert data.pop("payed_at")[:10:] == payed_at[:10:]
 
-    def test_when_valid_payment_post_saves_on_db(self, create_db_charge, db_session):
-        assert db_session.query(models.Charge).count() == 1
+    def test_when_valid_payment_post_saves_on_db(self, create_db_charge, session_maker):
+        assert session_maker().query(models.Charge).count() == 1
         response = client.post(
             self.build_url(create_db_charge.api_key.id),
             json={
@@ -331,9 +333,9 @@ class TestPayment:
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
             },
         )
-        assert db_session.query(models.Charge).count() == 1
+        assert session_maker().query(models.Charge).count() == 1
 
-        db_charge = db_session.query(models.Charge).first()
+        db_charge = session_maker().query(models.Charge).first()
         assert response.json() == {
             "id": db_charge.id,
             "debtor_cpf_cnpj": db_charge.debtor_cpf_cnpj,

@@ -1,7 +1,9 @@
 import os
 import unittest.mock
 import pytest
+
 import app.models
+import app.database
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -19,7 +21,7 @@ def use_db():
     session = SessionLocal()
 
     with unittest.mock.patch("app.database.engine", engine):
-        with unittest.mock.patch("app.database.SessionLocal", return_value=session):
+        with unittest.mock.patch("app.database.SessionLocal", SessionLocal):
             yield session
             session.close()
 
@@ -29,5 +31,14 @@ def use_db():
 
 
 @pytest.fixture
-def db_session(use_db):
-    return use_db
+def session_maker(use_db):
+    sessions_list = []
+    def get_session():
+        session = app.database.SessionLocal()
+        sessions_list.append(session)
+        return session
+
+    yield get_session
+
+    for session in sessions_list:
+        session.close()
