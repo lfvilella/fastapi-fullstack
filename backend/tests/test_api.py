@@ -212,3 +212,22 @@ class TestCreateCharge:
         )
         assert response.ok == False
         assert response.json().pop("detail").pop(0).pop("msg") == "Invalid CPF / CNPJ"
+
+    def test_when_empity_post_returns_error_unprocessable_entity(
+        self, create_db_entity
+    ):
+        response = client.post(self.build_url(create_db_entity.api_key.id), json={})
+        assert response.status_code == 422
+
+    def test_when_add_debt_to_yourself_returns_invalid(
+        self, payload_charge, create_db_entity
+    ):
+        payload_charge["debtor"]["cpf_cnpj"] = payload_charge["creditor_cpf_cnpj"]
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert (
+            response.json().get("detail").pop(0).pop("msg")
+            == "You can not add debt for yourself"
+        )
