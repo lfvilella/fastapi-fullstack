@@ -46,15 +46,7 @@ class TestCreateEntity:
         payload["cpf_cnpj"] = "12345678910"
         response = client.post("/v.1/entity", json=payload)
         assert response.ok == False
-        assert response.json() == {
-            "detail": [
-                {
-                    "loc": ["body", "entity", "cpf_cnpj"],
-                    "msg": "Invalid CPF / CNPJ",
-                    "type": "type_error",
-                }
-            ]
-        }
+        assert response.json().pop("detail").pop(0).pop("msg") == "Invalid CPF / CNPJ"
 
     def test_when_empity_post_returns_unprocessable_entity(self):
         response = client.post("/v.1/entity", json={})
@@ -129,15 +121,7 @@ class TestReadEntity:
             self.build_url("1234567891-011", create_db_entity.api_key.id)
         )
         assert request.ok == False
-        assert request.json() == {
-            "detail": [
-                {
-                    "loc": ["path", "cpf_cnpj"],
-                    "msg": "Invalid CPF / CNPJ",
-                    "type": "type_error",
-                }
-            ]
-        }
+        assert request.json().pop("detail").pop(0).pop("msg") == "Invalid CPF / CNPJ"
 
 
 @pytest.mark.usefixtures("use_db")
@@ -168,9 +152,63 @@ class TestCreateCharge:
         response = client.post(
             self.build_url(create_db_entity.api_key.id), json=payload_charge
         )
-        assert response.json().pop('debtor_cpf_cnpj') == payload_charge["debtor"]["cpf_cnpj"]
-        assert response.json().pop('creditor_cpf_cnpj') == payload_charge["creditor_cpf_cnpj"]
-        assert response.json().pop('debito') == payload_charge["debito"]
-        assert response.json().pop('is_active') == True
-        assert response.json().pop('payed_at') == None
+        assert (
+            response.json().pop("debtor_cpf_cnpj")
+            == payload_charge["debtor"]["cpf_cnpj"]
+        )
+        assert (
+            response.json().pop("creditor_cpf_cnpj")
+            == payload_charge["creditor_cpf_cnpj"]
+        )
+        assert response.json().pop("debito") == payload_charge["debito"]
+        assert response.json().pop("is_active") == True
+        assert response.json().pop("payed_at") == None
 
+    def test_when_valid_post_saves_on_db(
+        self, payload_charge, create_db_entity, db_session
+    ):
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+
+        assert db_session.query(models.Charge).count() == 1
+
+        db_charge = db_session.query(models.Charge).first()
+        assert db_charge.debtor_cpf_cnpj == payload_charge["debtor"]["cpf_cnpj"]
+        assert db_charge.creditor_cpf_cnpj == payload_charge["creditor_cpf_cnpj"]
+        assert db_charge.debito == payload_charge["debito"]
+        assert db_charge.payed_at == None
+
+    def test_when_api_key_is_empty_returns_forbidden(self, payload_charge):
+        response = client.post(self.build_url(""), json=payload_charge)
+        assert response.status_code == 403
+
+    def test_when_invalid_cpf_cnpj_post_returns_error_invalid_cpf_cnpj(
+        self, payload_charge, create_db_entity
+    ):
+        payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert response.json().pop("detail").pop(0).pop("msg") == "Invalid CPF / CNPJ"
+
+    def test_when_invalid_cpf_cnpj_post_returns_error_debtor_not_found(
+        self, payload_charge, create_db_entity
+    ):
+        payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert response.json().pop("detail").pop(1).pop("msg") == "Debtor not found"
+
+    def test_when_invalid_creditor_cpf_cnpj_post_returns_error_invalid_cpf_cnpj(
+        self, payload_charge, create_db_entity
+    ):
+        payload_charge["creditor_cpf_cnpj"] = "12345678910"
+        response = client.post(
+            self.build_url(create_db_entity.api_key.id), json=payload_charge
+        )
+        assert response.ok == False
+        assert response.json().pop("detail").pop(0).pop("msg") == "Invalid CPF / CNPJ"
