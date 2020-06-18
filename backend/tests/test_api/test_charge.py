@@ -221,6 +221,177 @@ class TestReadCharge:
             "payed_at": create_db_charge.charge.payed_at,
         }
 
+    def test_valid_returns_same_info_on_db(
+        self, create_db_charge, session_maker
+    ):
+        request = client.get(
+            self.build_url(
+                create_db_charge.charge.id, create_db_charge.api_key.id
+            )
+        )
+        db_charge = session_maker().query(models.Charge).first()
+        assert request.json() == {
+            "id": db_charge.id,
+            "debtor_cpf_cnpj": db_charge.debtor_cpf_cnpj,
+            "creditor_cpf_cnpj": db_charge.creditor_cpf_cnpj,
+            "debito": db_charge.debito,
+            "is_active": db_charge.is_active,
+            "created_at": db_charge.created_at.isoformat(),
+            "payed_at": db_charge.payed_at,
+        }
+
+    def test_when_invalid_id_returns_not_found(self, create_db_charge):
+        request = client.get(
+            self.build_url("123fakeID", create_db_charge.api_key.id)
+        )
+        assert request.status_code == 404
+        assert request.json().get("detail") == "Charge does not exist"
+
+
+@pytest.mark.usefixtures("use_db")
+class TestFilterCharge:
+    def build_url(
+        self,
+        api_key,
+        debtor_cpf_cnpj=None,
+        creditor_cpf_cnpj=None,
+        is_active=None,
+    ):
+        url = f"/v.1/charge?api_key={api_key}"
+        if debtor_cpf_cnpj:
+            url += f"&debtor_cpf_cnpj={debtor_cpf_cnpj}"
+
+        if creditor_cpf_cnpj:
+            url += f"&creditor_cpf_cnpj={creditor_cpf_cnpj}"
+
+        if is_active:
+            url += f"&is_active={is_active}"
+
+        return url
+
+    def test_valid_by_debtor_cpf_cnpj_returns_ok(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
+            )
+        )
+        assert request.status_code == 200
+
+    def test_valid_by_creditor_cpf_cnpj_returns_ok(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                creditor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
+            )
+        )
+        assert request.status_code == 200
+
+    def test_valid_by_is_active_returns_ok(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                is_active=create_db_charge.charge.is_active,
+            )
+        )
+        assert request.status_code == 200
+
+    def test_valid_by_all_fields_returns_ok(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
+                creditor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
+                is_active=create_db_charge.charge.is_active,
+            )
+        )
+        assert request.status_code == 200
+
+    def test_valid_returns_complete_body(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
+            )
+        )
+        assert request.json() == [
+                {
+                "id": create_db_charge.charge.id,
+                "debtor_cpf_cnpj": create_db_charge.charge.debtor_cpf_cnpj,
+                "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
+                "debito": create_db_charge.charge.debito,
+                "is_active": create_db_charge.charge.is_active,
+                "created_at": create_db_charge.charge.created_at.isoformat(),
+                "payed_at": create_db_charge.charge.payed_at,
+            }
+        ]
+    
+    def test_valid_returns_same_info_on_db(self, create_db_charge, session_maker):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
+            )
+        )
+        
+        db_charge = session_maker().query(models.Charge).first()
+        assert request.json() == [
+                {
+                "id": db_charge.id,
+                "debtor_cpf_cnpj": db_charge.debtor_cpf_cnpj,
+                "creditor_cpf_cnpj": db_charge.creditor_cpf_cnpj,
+                "debito": db_charge.debito,
+                "is_active": db_charge.is_active,
+                "created_at": db_charge.created_at.isoformat(),
+                "payed_at": db_charge.payed_at,
+            }
+        ]
+    
+    def test_invalid_debtor_cpf_cnpj_returns_unprocessable_entity(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj="123fake",
+            )
+        )
+        assert request.status_code == 422
+      
+    def test_invalid_debtor_cpf_cnpj_returns_not_found(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                debtor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
+            )
+        )
+        assert request.status_code == 404
+
+    def test_invalid_creditor_cpf_cnpj_returns_unprocessable_entity(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                creditor_cpf_cnpj="123fake",
+            )
+        )
+        assert request.status_code == 422
+
+    def test_invalid_creditor_cpf_cnpj_returns_not_found(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                creditor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
+            )
+        )
+        assert request.status_code == 404
+
+    def test_invalid_is_active_returns_unprocessable_entity(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                api_key=create_db_charge.api_key.id,
+                is_active="fake",
+            )
+        )
+        assert request.status_code == 422
+
 
 @pytest.mark.usefixtures("use_db")
 class TestPayment:
