@@ -1,6 +1,4 @@
 import pytest
-import collections
-import datetime
 from fastapi.testclient import TestClient
 
 from app import api
@@ -31,7 +29,7 @@ class TestLogin:
     def build_url(self):
         return f"/v.1/authenticate"
 
-    def test_when_login_valid_post_returns_ok(
+    def test_valid_returns_ok(
         self, payload, create_db_entity_with_password
     ):
         response = client.post(
@@ -47,7 +45,7 @@ class TestLogin:
             == create_db_entity_with_password.cpf_cnpj
         )
 
-    def test_when_login_valid_post_saves_on_db(
+    def test_valid_saves_on_db(
         self, payload, create_db_entity_with_password, session_maker
     ):
         response = client.post(
@@ -63,10 +61,10 @@ class TestLogin:
         assert db_api_key.id == response.json().get("api_key")
         assert db_api_key.cpf_cnpj == response.json().get("cpf_cnpj")
 
-    def test_when_two_login_valid_post_returns_two_api_keys(
+    def test_two_valids_returns_two_api_keys(
         self, payload, create_db_entity_with_password, session_maker
     ):
-        response = client.post(
+        client.post(
             self.build_url(),
             json={
                 "cpf_cnpj": create_db_entity_with_password.cpf_cnpj,
@@ -75,7 +73,7 @@ class TestLogin:
         )
         assert session_maker().query(models.APIKey).count() == 1
 
-        response = client.post(
+        client.post(
             self.build_url(),
             json={
                 "cpf_cnpj": create_db_entity_with_password.cpf_cnpj,
@@ -84,7 +82,7 @@ class TestLogin:
         )
         assert session_maker().query(models.APIKey).count() == 2
 
-    def test_when_invalid_password_returns_unprocessable_entity(
+    def test_invalid_password_returns_unprocessable_entity(
         self, create_db_entity_with_password
     ):
         response = client.post(
@@ -97,12 +95,12 @@ class TestLogin:
         response.status_code == 422
         response.json().get("msg") == "Invalid Crendentials"
 
-    def test_when_cpf_cnpj_not_registered_returns_unprocessable_entity(
+    def test_cpf_cnpj_not_registered_returns_unprocessable_entity(
         self, create_db_entity_with_password
     ):
         response = client.post(
             self.build_url(),
-            json={"cpf_cnpj": "03497961786765", "password": "",},
+            json={"cpf_cnpj": "03497961786765", "password": ""}
         )
         response.status_code == 422
         response.json().get("msg") == "Invalid Crendentials"
@@ -119,7 +117,7 @@ class TestLogout:
 
     def test_delete_from_db(self, create_db_entity, session_maker):
         assert session_maker().query(models.APIKey).count() == 1
-        response = client.delete(self.build_url(create_db_entity.api_key.id))
+        client.delete(self.build_url(create_db_entity.api_key.id))
         assert session_maker().query(models.APIKey).count() == 0
 
     def test_when_invalid_api_key_returns_forbidden(self, create_db_entity):

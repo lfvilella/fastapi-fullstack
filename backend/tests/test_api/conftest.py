@@ -1,6 +1,5 @@
 import pytest
 import collections
-import datetime
 
 from app import models
 

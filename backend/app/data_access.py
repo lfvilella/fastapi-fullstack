@@ -1,6 +1,5 @@
 import sqlalchemy.orm
 import typing
-import uuid
 import datetime
 from . import models, schemas, security
 
@@ -103,7 +102,7 @@ def filter_entity_by_type(
     api_key: str,
     limit: int = 100,
 ) -> typing.List[models.Entity]:
-    db_api_key = check_api_key(db, api_key=api_key)
+    check_api_key(db, api_key=api_key)
 
     query = (
         db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
@@ -174,7 +173,7 @@ def check_api_key(db: sqlalchemy.orm.Session, api_key: str):
 def get_charge_by_id(
     db: sqlalchemy.orm.Session, charge_id: str, api_key: str
 ) -> models.Charge:
-    db_api_key = check_api_key(db, api_key=api_key)
+    check_api_key(db, api_key=api_key)
     db_charge = db.query(models.Charge).get(charge_id)
 
     if not db_charge:
@@ -194,7 +193,7 @@ def filter_charge(
     charge_filter: schemas.ChargeFilter,
     api_key: str,
 ) -> typing.List[models.Charge]:
-    db_api_key = check_api_key(db, api_key=api_key)
+    check_api_key(db, api_key=api_key)
 
     query = db.query(models.Charge)
     if charge_filter.debtor_cpf_cnpj:
