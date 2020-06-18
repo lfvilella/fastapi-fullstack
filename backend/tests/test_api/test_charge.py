@@ -165,35 +165,65 @@ class TestCreateCharge:
         )
 
 
+@pytest.fixture
+def create_db_charge(payload, session_maker):
+    db_charge = models.Charge(
+        debtor_cpf_cnpj="03497961786765",
+        creditor_cpf_cnpj=payload["cpf_cnpj"],
+        debito=100,
+        is_active=True,
+        created_at=datetime.datetime.utcnow(),
+        payed_at=None,
+    )
+    session = session_maker()
+    session.add(db_charge)
+
+    api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
+    session.add(api_key)
+
+    session.flush()
+    session.commit()
+
+    DB_info = collections.namedtuple("DB_info", "charge api_key")
+    return DB_info(charge=db_charge, api_key=api_key)
+
+
 @pytest.mark.usefixtures("use_db")
 class TestReadCharge:
-    pass
+    def build_url(self, charge_id, api_key=None):
+        return f"/v.1/charge/{charge_id}?api_key={api_key}"
+
+    def test_valid_returns_ok(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                create_db_charge.charge.id, create_db_charge.api_key.id
+            )
+        )
+        assert request.status_code == 200
+
+    def test_when_api_key_is_empty_returns_forbidden(self, create_db_charge):
+        request = client.get(self.build_url(create_db_charge.charge.id, ""))
+        assert request.status_code == 403
+
+    def test_valid_returns_complete_body(self, create_db_charge):
+        request = client.get(
+            self.build_url(
+                create_db_charge.charge.id, create_db_charge.api_key.id
+            )
+        )
+        assert request.json() == {
+            "id": create_db_charge.charge.id,
+            "debtor_cpf_cnpj": create_db_charge.charge.debtor_cpf_cnpj,
+            "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
+            "debito": create_db_charge.charge.debito,
+            "is_active": create_db_charge.charge.is_active,
+            "created_at": create_db_charge.charge.created_at.isoformat(),
+            "payed_at": create_db_charge.charge.payed_at,
+        }
 
 
 @pytest.mark.usefixtures("use_db")
 class TestPayment:
-    @pytest.fixture
-    def create_db_charge(self, payload, session_maker):
-        db_charge = models.Charge(
-            debtor_cpf_cnpj="03497961786765",
-            creditor_cpf_cnpj=payload["cpf_cnpj"],
-            debito=100,
-            is_active=True,
-            created_at=datetime.datetime.utcnow(),
-            payed_at=None,
-        )
-        session = session_maker()
-        session.add(db_charge)
-
-        api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
-        session.add(api_key)
-
-        session.flush()
-        session.commit()
-
-        DB_info = collections.namedtuple("DB_info", "charge api_key")
-        return DB_info(charge=db_charge, api_key=api_key)
-
     def build_url(self, api_key=None):
         return f"/v.1/charge/payment?api_key={api_key}"
 
