@@ -49,10 +49,10 @@ def get_entity_by_cpf_cnpj_and_password(
 ) -> models.Entity:
     entity = get_entity_by_cpf_cnpj(db, cpf_cnpj, validate_api_key=False)
     if not entity:
-        raise ValidationError("Invalid Credencials")
+        raise ValidationError("Invalid Credentials")
 
     if not security.verify_password(password, entity.hashed_password):
-        return None
+        raise ValidationError("Invalid Credentials")
 
     return entity
 
@@ -64,7 +64,9 @@ def create_entity(
     persist: bool = True,
 ) -> models.Entity:
 
-    if get_entity_by_cpf_cnpj(db, cpf_cnpj=entity.cpf_cnpj, validate_api_key=False):
+    if get_entity_by_cpf_cnpj(
+        db, cpf_cnpj=entity.cpf_cnpj, validate_api_key=False
+    ):
         raise ValidationError("Entity already exist")
 
     db_entity = models.Entity(**entity.dict())
@@ -86,7 +88,9 @@ def create_entity(
     return db_entity
 
 
-def get_entity_api_key_by_id(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
+def get_entity_api_key_by_id(
+    db: sqlalchemy.orm.Session, api_key: str
+) -> models.APIKey:
     if not api_key:
         return None
 
@@ -94,11 +98,16 @@ def get_entity_api_key_by_id(db: sqlalchemy.orm.Session, api_key: str) -> models
 
 
 def filter_entity_by_type(
-    db: sqlalchemy.orm.Session, type_entity: str, api_key: str, limit: int = 100
+    db: sqlalchemy.orm.Session,
+    type_entity: str,
+    api_key: str,
+    limit: int = 100,
 ) -> typing.List[models.Entity]:
     db_api_key = check_api_key(db, api_key=api_key)
 
-    query = db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
+    query = (
+        db.query(models.Entity).filter_by(type_entity=type_entity).limit(limit)
+    )
 
     if not query.all():
         raise DoesNotExisit("Entities not found")
@@ -137,18 +146,12 @@ def create_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
     return db_api_key
 
 
-def delete_api_key(
-    db: sqlalchemy.orm.Session, cpf_cnpj_filter: str, api_key: str
-) -> models.APIKey:
+def delete_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
     db_api_key = check_api_key(db, api_key=api_key)
 
-    filter_api_key = db.query(models.APIKey).filter_by(cpf_cnpj=cpf_cnpj_filter).all()
-
-    if db_api_key.cpf_cnpj != cpf_cnpj_filter:
-        raise ValidationError("Invalid Credencials")
-
-    if not filter_api_key:
-        raise DoesNotExisit("APIKey does not exist")
+    filter_api_key = (
+        db.query(models.APIKey).filter_by(cpf_cnpj=db_api_key.cpf_cnpj).all()
+    )
 
     for item in filter_api_key:
         db.delete(item)
@@ -187,7 +190,9 @@ def get_charge_by_creditor_cpf_cnpj(
 
 
 def filter_charge(
-    db: sqlalchemy.orm.Session, charge_filter: schemas.ChargeFilter, api_key: str
+    db: sqlalchemy.orm.Session,
+    charge_filter: schemas.ChargeFilter,
+    api_key: str,
 ) -> typing.List[models.Charge]:
     db_api_key = check_api_key(db, api_key=api_key)
 
@@ -196,7 +201,9 @@ def filter_charge(
         query = query.filter_by(debtor_cpf_cnpj=charge_filter.debtor_cpf_cnpj)
 
     if charge_filter.creditor_cpf_cnpj:
-        query = query.filter_by(creditor_cpf_cnpj=charge_filter.creditor_cpf_cnpj)
+        query = query.filter_by(
+            creditor_cpf_cnpj=charge_filter.creditor_cpf_cnpj
+        )
 
     if charge_filter.is_active is not None:
         query = query.filter_by(is_active=charge_filter.is_active)
@@ -232,7 +239,6 @@ def create_charge(
         creditor_cpf_cnpj=creditor_db.cpf_cnpj,
         debito=charge.debito,
         is_active=True,
-        created_at=datetime.datetime.utcnow(),
     )
     db.add(db_charge)
     db.commit()
@@ -240,11 +246,15 @@ def create_charge(
 
 
 def payment_charge(
-    db: sqlalchemy.orm.Session, payment_info: schemas.ChargePayment, api_key: str
+    db: sqlalchemy.orm.Session,
+    payment_info: schemas.ChargePayment,
+    api_key: str,
 ) -> models.Charge:
     db_api_key = check_api_key(db, api_key=api_key)
 
-    db_charge = get_charge_by_id(db, charge_id=payment_info.id, api_key=api_key)
+    db_charge = get_charge_by_id(
+        db, charge_id=payment_info.id, api_key=api_key
+    )
 
     if not db_charge:
         raise DoesNotExisit("Charge not found to pay")

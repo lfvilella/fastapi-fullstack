@@ -17,15 +17,12 @@ def use_db():
     )
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    app.models.Base.metadata.create_all(engine)
-    session = SessionLocal()
-
     with unittest.mock.patch("app.database.engine", engine):
         with unittest.mock.patch("app.database.SessionLocal", SessionLocal):
-            yield session
-            session.close()
+            app.models.Base.metadata.create_all(engine)
+            yield None
+            app.models.Base.metadata.drop_all(engine)
 
-    app.models.Base.metadata.drop_all(engine)
     if os.path.exists(db_path):
         os.remove(db_path)
 
@@ -33,6 +30,7 @@ def use_db():
 @pytest.fixture
 def session_maker(use_db):
     sessions_list = []
+
     def get_session():
         session = app.database.SessionLocal()
         sessions_list.append(session)

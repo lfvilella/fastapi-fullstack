@@ -14,7 +14,9 @@ class Entity(Base):
     )
     name = sqlalchemy.Column(sqlalchemy.String)
     type_entity = sqlalchemy.Column(sqlalchemy.String(2))
-    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True, default=None)
+    hashed_password = sqlalchemy.Column(
+        sqlalchemy.String, nullable=True, default=None
+    )
 
 
 class Charge(Base):
@@ -37,8 +39,12 @@ class Charge(Base):
     )
     debito = sqlalchemy.Column(sqlalchemy.Float)
     is_active = sqlalchemy.Column(sqlalchemy.Boolean)
-    created_at = sqlalchemy.Column(sqlalchemy.DateTime)
-    payed_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True, default=None)
+    created_at = sqlalchemy.Column(
+        sqlalchemy.DateTime, default=datetime.datetime.utcnow
+    )
+    payed_at = sqlalchemy.Column(
+        sqlalchemy.DateTime, nullable=True, default=None
+    )
 
 
 class APIKey(Base):

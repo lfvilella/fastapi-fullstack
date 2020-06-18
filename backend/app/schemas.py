@@ -112,10 +112,6 @@ class Authenticate(pydantic.BaseModel):
     password: str
 
 
-class Logout(pydantic.BaseModel):
-    cpf_cnpj: CpfOrCnpj
-
-
 class APIKey(pydantic.BaseModel):
     api_key: str
     cpf_cnpj: CpfOrCnpj
