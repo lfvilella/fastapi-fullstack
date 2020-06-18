@@ -1,6 +1,8 @@
 import sqlalchemy.orm
 import typing
 import datetime
+import secrets
+import hashlib
 from . import models, schemas, security
 
 
@@ -121,13 +123,16 @@ def entity_set_password(
     entity: models.Entity = None,
     persist=True,
 ) -> models.Entity:
-    entity = entity or get_entity_by_cpf_cnpj(db, cpf_cnpj)
+    entity = entity or get_entity_by_cpf_cnpj(
+        db, cpf_cnpj, validate_api_key=False
+    )
 
     if not entity:
         raise DoesNotExisit("Entity does not exist")
 
     entity.hashed_password = security.get_password_hash(password)
     db.add(entity)
+    db.flush()
     if persist:
         db.commit()
     return entity
@@ -136,13 +141,32 @@ def entity_set_password(
 # APIKEY THINGS
 
 
-def create_api_key(db: sqlalchemy.orm.Session, cpf_cnpj: str) -> models.APIKey:
+def generate_api_key(identifier, verifier) -> str:
+    return f"{identifier}.{verifier}"
+
+
+def split_api_key(api_key: str) -> typing.Tuple[str]:
+    try:
+        identifier, verifier = str(api_key).split(".")
+        return (identifier, verifier)
+    except ValueError:
+        raise APIKeyNotFound()
+
+
+def create_api_key(
+    db: sqlalchemy.orm.Session, cpf_cnpj: str, persist=True
+) -> str:
+    verifier = secrets.token_hex(16)
     db_api_key = models.APIKey(
-        cpf_cnpj=cpf_cnpj, created_at=datetime.datetime.utcnow(),
+        cpf_cnpj=cpf_cnpj,
+        created_at=datetime.datetime.utcnow(),
+        verifier_hash=hashlib.sha256(verifier.encode("utf-8")).hexdigest(),
     )
     db.add(db_api_key)
-    db.commit()
-    return db_api_key
+    db.flush()
+    if persist:
+        db.commit()
+    return generate_api_key(db_api_key.id, verifier)
 
 
 def delete_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
@@ -159,9 +183,15 @@ def delete_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
     return filter_api_key
 
 
-def check_api_key(db: sqlalchemy.orm.Session, api_key: str):
-    db_api_key = get_entity_api_key_by_id(db, api_key=api_key)
+def check_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
+    indentifier, verifier = split_api_key(api_key)
+
+    db_api_key = get_entity_api_key_by_id(db, api_key=indentifier)
     if not db_api_key:
+        raise APIKeyNotFound()
+
+    verifier_hash = hashlib.sha256(verifier.encode("utf-8")).hexdigest()
+    if verifier_hash != db_api_key.verifier_hash:
         raise APIKeyNotFound()
 
     return db_api_key

@@ -1,6 +1,7 @@
 import sqlalchemy
 import sqlalchemy.orm
 import uuid
+import secrets
 import datetime
 
 from .database import Base
@@ -51,12 +52,13 @@ class APIKey(Base):
     __tablename__ = "apikeys"
 
     id = sqlalchemy.Column(
-        sqlalchemy.String,
+        sqlalchemy.String(32),
         primary_key=True,
         unique=True,
         index=True,
-        default=lambda: str(uuid.uuid4()),
+        default=lambda: str(secrets.token_hex(32)),
     )
+    verifier_hash = sqlalchemy.Column(sqlalchemy.String(64))
     cpf_cnpj = sqlalchemy.Column(
         sqlalchemy.String,
         sqlalchemy.ForeignKey("entities.cpf_cnpj"),

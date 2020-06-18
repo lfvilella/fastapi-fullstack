@@ -139,7 +139,7 @@ def authenticate_login(
     )
 
     api_key = data_access.create_api_key(db, cpf_cnpj=entity.cpf_cnpj)
-    return schemas.APIKey(api_key=api_key.id, cpf_cnpj=entity.cpf_cnpj)
+    return schemas.APIKey(api_key=api_key, cpf_cnpj=entity.cpf_cnpj)
 
 
 @app.delete(_VERSION + "/authenticate", status_code=204)

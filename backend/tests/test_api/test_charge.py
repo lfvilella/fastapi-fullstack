@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app import api
 from app import models
+from app import data_access
 
 
 client = TestClient(api.app)
@@ -26,11 +27,9 @@ class TestCreateCharge:
     def build_url(self, api_key=None):
         return f"/v.1/charge?api_key={api_key}"
 
-    def test_valid_returns_created(
-        self, payload_charge, create_db_entity
-    ):
+    def test_valid_returns_created(self, payload_charge, create_db_entity):
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert response.status_code == 201
 
@@ -38,7 +37,7 @@ class TestCreateCharge:
         self, payload_charge, create_db_entity
     ):
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert (
             response.json().get("debtor_cpf_cnpj")
@@ -56,7 +55,7 @@ class TestCreateCharge:
         self, payload_charge, create_db_entity, session_maker
     ):
         client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
 
         assert session_maker().query(models.Charge).count() == 1
@@ -80,7 +79,7 @@ class TestCreateCharge:
     ):
         payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -93,7 +92,7 @@ class TestCreateCharge:
     ):
         payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -106,7 +105,7 @@ class TestCreateCharge:
     ):
         payload_charge["creditor_cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -118,7 +117,7 @@ class TestCreateCharge:
         self, create_db_entity
     ):
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json={}
+            self.build_url(create_db_entity.api_key), json={}
         )
         assert response.status_code == 422
 
@@ -129,7 +128,7 @@ class TestCreateCharge:
             "creditor_cpf_cnpj"
         ]
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -137,12 +136,10 @@ class TestCreateCharge:
             == "You can not add debt for yourself"
         )
 
-    def test_zero_debt_returns_error(
-        self, payload_charge, create_db_entity
-    ):
+    def test_zero_debt_returns_error(self, payload_charge, create_db_entity):
         payload_charge["debito"] = 0
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -155,7 +152,7 @@ class TestCreateCharge:
     ):
         payload_charge["debito"] = -100
         response = client.post(
-            self.build_url(create_db_entity.api_key.id), json=payload_charge
+            self.build_url(create_db_entity.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -166,7 +163,7 @@ class TestCreateCharge:
 
 @pytest.fixture
 def create_db_charge(payload, session_maker):
-    db_charge = models.Charge(
+    charge = models.Charge(
         debtor_cpf_cnpj="03497961786765",
         creditor_cpf_cnpj=payload["cpf_cnpj"],
         debito=100,
@@ -175,16 +172,17 @@ def create_db_charge(payload, session_maker):
         payed_at=None,
     )
     session = session_maker()
-    session.add(db_charge)
+    session.add(charge)
 
-    api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
-    session.add(api_key)
+    api_key = data_access.create_api_key(
+        session, charge.creditor_cpf_cnpj, persist=False
+    )
 
     session.flush()
     session.commit()
 
     DB_info = collections.namedtuple("DB_info", "charge api_key")
-    return DB_info(charge=db_charge, api_key=api_key)
+    return DB_info(charge=charge, api_key=api_key)
 
 
 @pytest.mark.usefixtures("use_db")
@@ -195,7 +193,7 @@ class TestReadCharge:
     def test_valid_returns_ok(self, create_db_charge):
         request = client.get(
             self.build_url(
-                create_db_charge.charge.id, create_db_charge.api_key.id
+                create_db_charge.charge.id, create_db_charge.api_key
             )
         )
         assert request.status_code == 200
@@ -207,7 +205,7 @@ class TestReadCharge:
     def test_valid_returns_complete_body(self, create_db_charge):
         request = client.get(
             self.build_url(
-                create_db_charge.charge.id, create_db_charge.api_key.id
+                create_db_charge.charge.id, create_db_charge.api_key
             )
         )
         assert request.json() == {
@@ -225,7 +223,7 @@ class TestReadCharge:
     ):
         request = client.get(
             self.build_url(
-                create_db_charge.charge.id, create_db_charge.api_key.id
+                create_db_charge.charge.id, create_db_charge.api_key
             )
         )
         db_charge = session_maker().query(models.Charge).first()
@@ -241,7 +239,7 @@ class TestReadCharge:
 
     def test_invalid_id_returns_not_found(self, create_db_charge):
         request = client.get(
-            self.build_url("123fakeID", create_db_charge.api_key.id)
+            self.build_url("123fakeID", create_db_charge.api_key)
         )
         assert request.status_code == 404
         assert request.json().get("detail") == "Charge does not exist"
@@ -271,7 +269,7 @@ class TestFilterCharge:
     def test_valid_by_debtor_cpf_cnpj_returns_ok(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
@@ -280,7 +278,7 @@ class TestFilterCharge:
     def test_valid_by_creditor_cpf_cnpj_returns_ok(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 creditor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
             )
         )
@@ -289,7 +287,7 @@ class TestFilterCharge:
     def test_valid_by_is_active_returns_ok(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 is_active=create_db_charge.charge.is_active,
             )
         )
@@ -298,7 +296,7 @@ class TestFilterCharge:
     def test_valid_by_all_fields_returns_ok(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
                 creditor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
                 is_active=create_db_charge.charge.is_active,
@@ -309,7 +307,7 @@ class TestFilterCharge:
     def test_valid_returns_complete_body(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
@@ -330,7 +328,7 @@ class TestFilterCharge:
     ):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
@@ -353,7 +351,7 @@ class TestFilterCharge:
     ):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id, debtor_cpf_cnpj="123fake",
+                api_key=create_db_charge.api_key, debtor_cpf_cnpj="123fake",
             )
         )
         assert request.status_code == 422
@@ -361,7 +359,7 @@ class TestFilterCharge:
     def test_invalid_debtor_cpf_cnpj_returns_not_found(self, create_db_charge):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 debtor_cpf_cnpj=create_db_charge.charge.creditor_cpf_cnpj,
             )
         )
@@ -372,8 +370,7 @@ class TestFilterCharge:
     ):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
-                creditor_cpf_cnpj="123fake",
+                api_key=create_db_charge.api_key, creditor_cpf_cnpj="123fake",
             )
         )
         assert request.status_code == 422
@@ -383,7 +380,7 @@ class TestFilterCharge:
     ):
         request = client.get(
             self.build_url(
-                api_key=create_db_charge.api_key.id,
+                api_key=create_db_charge.api_key,
                 creditor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
@@ -393,9 +390,7 @@ class TestFilterCharge:
         self, create_db_charge
     ):
         request = client.get(
-            self.build_url(
-                api_key=create_db_charge.api_key.id, is_active="fake",
-            )
+            self.build_url(api_key=create_db_charge.api_key, is_active="fake",)
         )
         assert request.status_code == 422
 
@@ -407,7 +402,7 @@ class TestPayment:
 
     def test_valid_payment_returns_ok(self, create_db_charge):
         response = client.post(
-            self.build_url(create_db_charge.api_key.id),
+            self.build_url(create_db_charge.api_key),
             json={
                 "id": create_db_charge.charge.id,
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
@@ -419,7 +414,7 @@ class TestPayment:
         self, payload, create_db_charge
     ):
         response = client.post(
-            self.build_url(create_db_charge.api_key.id),
+            self.build_url(create_db_charge.api_key),
             json={
                 "id": create_db_charge.charge.id,
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
@@ -444,12 +439,10 @@ class TestPayment:
         payed_at = datetime.datetime.utcnow().isoformat()
         assert data.get("payed_at")[:10:] == payed_at[:10:]
 
-    def test_valid_payment_saves_on_db(
-        self, create_db_charge, session_maker
-    ):
+    def test_valid_payment_saves_on_db(self, create_db_charge, session_maker):
         assert session_maker().query(models.Charge).count() == 1
         response = client.post(
-            self.build_url(create_db_charge.api_key.id),
+            self.build_url(create_db_charge.api_key),
             json={
                 "id": create_db_charge.charge.id,
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
@@ -472,8 +465,8 @@ class TestPayment:
         self, create_db_charge
     ):
         response = client.post(
-            self.build_url(create_db_charge.api_key.id),
-            json={"id": create_db_charge.charge.id, "creditor_cpf_cnpj": ""}
+            self.build_url(create_db_charge.api_key),
+            json={"id": create_db_charge.charge.id, "creditor_cpf_cnpj": ""},
         )
         assert response.status_code == 422
         assert (
@@ -481,11 +474,9 @@ class TestPayment:
             == "Invalid CPF / CNPJ"
         )
 
-    def test_invalid_id_payment_returns_not_found(
-        self, create_db_charge
-    ):
+    def test_invalid_id_payment_returns_not_found(self, create_db_charge):
         response = client.post(
-            self.build_url(create_db_charge.api_key.id),
+            self.build_url(create_db_charge.api_key),
             json={
                 "id": "",
                 "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,

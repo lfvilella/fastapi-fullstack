@@ -2,6 +2,7 @@ import pytest
 import collections
 
 from app import models
+from app import data_access
 
 
 @pytest.fixture
@@ -17,8 +18,9 @@ def create_db_entity(payload, session_maker):
     session = session_maker()
     session.add(entity)
 
-    api_key = models.APIKey(cpf_cnpj=payload["cpf_cnpj"])
-    session.add(api_key)
+    api_key = data_access.create_api_key(
+        session, entity.cpf_cnpj, persist=False
+    )
 
     session.flush()
     session.commit()

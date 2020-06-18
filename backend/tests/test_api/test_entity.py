@@ -36,9 +36,7 @@ class TestCreateEntity:
         assert payload["name"] == db_entity.name
         assert payload["cpf_cnpj"] == db_entity.cpf_cnpj
 
-    def test_invalid_cpf_cnpj_returns_error_invalid_cpf_cnpj(
-        self, payload
-    ):
+    def test_invalid_cpf_cnpj_returns_error_invalid_cpf_cnpj(self, payload):
         payload["cpf_cnpj"] = "12345678910"
         response = client.post("/v.1/entity", json=payload)
         assert not response.ok
@@ -72,7 +70,7 @@ class TestReadEntity:
     def test_valid_get_returns_ok(self, create_db_entity):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
             )
         )
         assert request.status_code == 200
@@ -80,7 +78,7 @@ class TestReadEntity:
     def test_valid_get_returns_complete_body(self, create_db_entity):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
             )
         )
         assert request.json() == {
@@ -94,7 +92,7 @@ class TestReadEntity:
     ):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key.id
+                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
             )
         )
         db_entity = session_maker().query(models.Entity).first()
@@ -106,7 +104,7 @@ class TestReadEntity:
 
     def test_get_with_invalid_cpf_cnpj(self, create_db_entity):
         request = client.get(
-            self.build_url("1234567891-011", create_db_entity.api_key.id)
+            self.build_url("1234567891-011", create_db_entity.api_key)
         )
         assert not request.ok
         assert (
