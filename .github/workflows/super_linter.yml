@@ -34,7 +34,13 @@ jobs:
       # Checkout the code base #
       ##########################
       - name: Checkout Code
-        uses: actions/checkout@v2
+      uses: actions/checkout@v2
+      
+      ###############################
+      # Install Python Requirements #
+      ###############################
+      - name: Install Python Requirements
+        uses: pip install -r backend/requirements-test.txt
 
       ################################
       # Run Linter against code base #
