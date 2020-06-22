@@ -87,7 +87,7 @@
               <br>
               <input type="password" placeholder="Password" v-model="loginData.password">
               <br>
-              <button style="color: black !important;" v-on:click="doLogin()">login</button>
+              <button style="color: black !important;" v-on:click="doLogin(loginData)">login</button>
             </div>
           </div>
 
@@ -210,14 +210,9 @@
         showLogin: true,
       },
       methods: {
-        doLogin: function (signUp = null) {
-          const { cpf_cnpj, password } = this.loginData;
-          debugger
-          if (signUp) {
-            cpf_cnpj = this.signUpData.cpf_cnpj;
-            password = this.signUpData.password;
-          };
-          axios.post('/api/v.1/authenticate', {
+        doLogin: function (loginData) {
+          const { cpf_cnpj, password } = loginData;
+          return axios.post('/api/v.1/authenticate', {
             cpf_cnpj: cpf_cnpj,
             password: password,
           })
@@ -233,13 +228,16 @@
 
         doSignUp: function () {
           const { name, cpf_cnpj, password } = this.signUpData;
-          axios.post('/api/v.1/entity', {
+          return axios.post('/api/v.1/entity', {
             name: name,
             cpf_cnpj: cpf_cnpj,
             password: password,
           })
             .then((response) => {
-              this.doLogin(singUp=true);
+              this.doLogin({
+                cpf_cnpj: cpf_cnpj,
+                password: password,
+              });
             })
             .catch((error) => {
               console.log(error);
@@ -256,7 +254,7 @@
               this.chargesList = response.data;
             })
             .catch((error) => {
-              if (error.response.status === 404) {
+              if ([404, 422].indexOf(error.response.status) >= 0) {
                 this.chargesList = [];
                 return;
               }
