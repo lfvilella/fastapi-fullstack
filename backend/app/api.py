@@ -8,7 +8,7 @@ from . import schemas, data_access, database, models
 models.Base.metadata.create_all(bind=database.engine)
 
 app = fastapi.FastAPI()
-_VERSION = "/v.1"
+_VERSION = "/api/v.1"
 
 
 # Dependency

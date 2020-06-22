@@ -11,3 +11,14 @@ services:
     stdin_open: true
     tty: true
     command: /bin/bash
+
+  proxy:
+    build: proxy
+    ports:
+      - "80:80"
+    volumes: 
+      - ./frontend:/app
+    depends_on: 
+      - backend
+    links: 
+      - backend:backend_api
