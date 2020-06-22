@@ -14,10 +14,17 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" />
 
 
-  <title>Management</title>
+  <title>Cobranças</title>
   <style>
     * {
       color: #000000 !important;
+    }
+
+    button {
+      color: white !important;
+    }
+    button i{
+      color: white !important;
     }
 
     /* Login / SignUP */
@@ -42,17 +49,22 @@
     }
 
     .list-debtors {
+      height: 70vh;
       padding: 20px;
       border: 1px solid black;
       border-radius: 10px;
     }
 
     .not-found-charge {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       opacity: 0.6;
     }
 
     .not-found-charge i {
-      font-size: 50pt;
+      font-size: 90pt;
     }
 
     .margin-top {
@@ -64,7 +76,7 @@
 <body>
   <div id="app">
     <!-- Login -->
-    <div class="modal-body authentication" v-if="showLogin">
+    <div class="authentication" v-if="showLogin">
       <div class="container">
         <div class="row text-center">
           <div class="col-md-6 right-line">
@@ -74,7 +86,7 @@
               <br>
               <input type="text" placeholder="Password">
               <br>
-              <button>login</button>
+              <button style="color: black !important;">login</button>
             </div>
           </div>
           <div class="col-md-6">
@@ -85,7 +97,7 @@
             <br>
             <input type="text" placeholder="Password">
             <br>
-            <button>singup</button>
+            <button style="color: black !important;">singup</button>
           </div>
         </div>
       </div>
@@ -96,9 +108,9 @@
     <div class="container managment" v-if="showLogin == false">
       <div class="row">
         <div class="col-md-8 text-left">
-          <h1>Buscar Pêndencias/Cobranças:</h1>
+          <h1>Buscar Pêndencias:</h1>
           <input type="text" placeholder="Buscar Devedor" v-model="search">
-          <button><i class="fas fa-search"></i></button>
+          <button class="btn btn-primary"><i class="fas fa-search"></i></button>
         </div>
         <div class="col-md-4 text-right">
           <button type="button" class="btn btn-primary margin-top" data-toggle="modal" data-target="#addDebitoModal">
@@ -134,21 +146,21 @@
 
       <br><br>
 
-      <div class="list-debtors">
+      <div class="list-debtors overflow-auto">
         <div class="not-found-charge text-center" v-if="chargesList.length == 0">
           <i class="fas fa-times"></i>
-          <h3>Charge Not Found</h3>
+          <h1>Charge Not Found</h1>
         </div>
         <div class="list-group" v-for="charge in chargesList">
-          <div class="list-group-item list-group-item-action">
+          <div style="margin-bottom: 10px !important;" class="list-group-item list-group-item-action">
             <div class="d-flex w-100 justify-content-between">
               <h5 class="mb-1">Devedor: {{ charge.debtor_cpf_cnpj }}</h5>
               <small>{{ charge.created_at }}</small>
             </div>
             <p class="mb-1">R$ {{ charge.debito }}</p>
             <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
-            <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i
-                class="fas fa-handshake"></i></button>
+            <button style="font-size: 10pt;" class="btn btn-success" v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i
+                 style="font-size: 12pt;" class="fas fa-handshake"></i></button>
           </div>
         </div>
       </div>
@@ -174,6 +186,14 @@
       el: '#app',
       data: {
         chargesList: [
+          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
