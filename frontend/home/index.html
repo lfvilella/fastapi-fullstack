@@ -45,6 +45,12 @@
     }
 
     /* Managment */
+    .logout {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
     .managment {
       margin-top: 20px;
     }
@@ -108,6 +114,10 @@
 
     <!-- Managment -->
     <div class="container managment" v-if="showLogin == false">
+      <div class="logout">
+        <button type="button" class="btn btn-danger" v-on:click="doLogout()">LOGOUT</button>
+      </div>
+
       <div class="row">
         <div class="col-md-8 text-left">
           <h1>Buscar Pêndencias:</h1>
@@ -205,7 +215,7 @@
           { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
         ],
-        loggedUser: { name: 'Joazinho', cpf_cnpj: '123123123', apiKey: null },
+        loggedUser: { name: '', cpf_cnpj: '', apiKey: null },
         search: '34792144697825',
         showLogin: true,
       },
@@ -218,11 +228,26 @@
           })
             .then((response) => {
               this.loggedUser.apiKey = response.data.api_key;
+              debugger
               this.loggedUser.cpf_cnpj = response.data.cpf_cnpj;
               this.showLogin = false;
             })
             .catch((error) => {
               console.log(error.response.data);
+            });
+        },
+
+        doLogout: function () {
+          const params = { api_key: this.loggedUser.apiKey, }
+          axios.delete('/api/v.1/authenticate', { params: params })
+            .then((response) => {
+              debugger
+              this.showLogin = true;
+              console.log(response);
+            })
+            .catch((error) => {
+              debugger
+              console.log(error);
             });
         },
 
