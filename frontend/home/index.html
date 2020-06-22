@@ -89,22 +89,26 @@
           <div class="col-md-6 right-line">
             <div class="login">
               <h1>Login</h1>
-              <input type="text" placeholder="CPF or CNPJ" v-model="loginData.cpf_cnpj">
+              <input type="text" placeholder="CPF or CNPJ" v-model="loginData.cpf_cnpj" required>
               <br>
-              <input type="password" placeholder="Password" v-model="loginData.password">
+              <input type="password" placeholder="Password" v-model="loginData.password" required>
               <br>
+              {{ errorLogin }}
+              <br v-if="errorLogin">
               <button style="color: black !important;" v-on:click="doLogin(loginData)">login</button>
             </div>
           </div>
 
           <div class="col-md-6">
             <h1>Sign Up</h1>
-            <input type="text" placeholder="Name" v-model="signUpData.name">
+            <input type="text" placeholder="Name" v-model="signUpData.name" required>
             <br>
-            <input type="text" placeholder="CPF or CNPJ" v-model="signUpData.cpf_cnpj">
+            <input type="text" placeholder="CPF or CNPJ" v-model="signUpData.cpf_cnpj" required>
             <br>
-            <input type="password" placeholder="Password" v-model="signUpData.password">
+            <input type="password" placeholder="Password" v-model="signUpData.password" required>
             <br>
+            {{ errorSignUp }}
+            <br v-if="errorSignUp">
             <button style="color: black !important;" v-on:click="doSignUp()">singup</button>
           </div>
         </div>
@@ -121,7 +125,7 @@
       <div class="row">
         <div class="col-md-8 text-left">
           <h1>Buscar Pêndencias:</h1>
-          <input type="text" placeholder="Buscar Devedor" v-model="search">
+          <input type="text" placeholder="Buscar Devedor" v-model="search" required>
           <button class="btn btn-primary" v-on:click="getCharges(search)"><i class="fas fa-search"></i></button>
         </div>
         <div class="col-md-4 text-right">
@@ -140,11 +144,11 @@
                   </button>
                 </div>
                 <div class="modal-body text-center">
-                  <input type="text" placeholder="Nome">
+                  <input type="text" placeholder="Nome" required>
                   <br>
-                  <input type="text" placeholder="CPF ou CNPJ">
+                  <input type="text" placeholder="CPF ou CNPJ" required>
                   <br>
-                  <input type="text" placeholder="Valor">
+                  <input type="text" placeholder="Valor" required>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
@@ -205,19 +209,14 @@
           { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
         ],
         loggedUser: { name: '', cpf_cnpj: '', apiKey: null },
         search: '34792144697825',
         showLogin: true,
+
+        // Errors:
+        errorLogin: '',
+        errorSignUp: '',
       },
       methods: {
         doLogin: function (loginData) {
@@ -228,11 +227,18 @@
           })
             .then((response) => {
               this.loggedUser.apiKey = response.data.api_key;
-              debugger
               this.loggedUser.cpf_cnpj = response.data.cpf_cnpj;
               this.showLogin = false;
             })
             .catch((error) => {
+              if (error.response.status === 422) {
+                this.errorLogin = error.response.data.detail[0].msg;
+                return;
+              }
+              if (error.response.status === 400) {
+                this.errorLogin = error.response.data.detail;
+                return;
+              }
               console.log(error.response.data);
             });
         },
@@ -241,12 +247,10 @@
           const params = { api_key: this.loggedUser.apiKey, }
           axios.delete('/api/v.1/authenticate', { params: params })
             .then((response) => {
-              debugger
               this.showLogin = true;
               console.log(response);
             })
             .catch((error) => {
-              debugger
               console.log(error);
             });
         },
@@ -265,6 +269,14 @@
               });
             })
             .catch((error) => {
+              if (error.response.status === 422) {
+                this.errorSignUp = error.response.data.detail[0].msg;
+                return;
+              }
+              if (error.response.status === 400) {
+                this.errorSignUp = error.response.data.detail;
+                return;
+              }
               console.log(error);
             });
         },
