@@ -3,6 +3,7 @@ import sqlalchemy.orm
 import typing
 from . import schemas, data_access, database, models
 
+
 # Create DB
 models.Base.metadata.create_all(bind=database.engine)
 

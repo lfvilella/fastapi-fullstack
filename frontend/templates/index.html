@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+  <!-- Fontawesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" />
+
+
+  <title>Management</title>
+  <style>
+    * {
+      color: #000000 !important;
+    }
+
+    .list-debtors {
+      padding: 20px;
+      border: 1px solid black;
+      border-radius: 10px;
+    }
+
+    .not-found-charge {
+      opacity: 0.6;
+    }
+
+    .not-found-charge i {
+      font-size: 50pt;
+    }
+
+    .margin-bottom {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <br>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8 text-left">
+          <h1>Buscar Pêndencias/Cobranças:</h1>
+          <input type="text" placeholder="Buscar Devedor" v-model="search">
+          <button><i class="fas fa-search"></i></button>
+        </div>
+        <div class="col-md-4 text-right">
+          <button class="margin-bottom" >Incluir Débito <i class="fas fa-hand-holding-usd"></i></button>
+          <br>
+          <button >Excluir Débito <i class="fas fa-handshake"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <br><br>
+
+    <div class="container list-debtors">
+      <div class="not-found-charge text-center" v-if="chargesList.length == 0">
+        <i class="fas fa-times"></i>
+        <h3>Charge Not Found</h3>
+      </div>
+      <div class="list-group" v-for="charge in chargesList">
+        <div class="list-group-item list-group-item-action">
+          <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">Devedor: {{ charge.debtor_cpf_cnpj }}</h5>
+            <small>{{ charge.created_at }}</small>
+          </div>
+          <p class="mb-1">R$ {{ charge.debito }}</p>
+          <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
+          <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">botao</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Js bootstrap -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+
+  <!-- VueJS -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        chargesList: [
+          {'debito':100, 'created_at':'3 days ago', 'creditor_cpf_cnpj':'123123123', 'debtor_cpf_cnpj':'456456456'},
+          {'debito':500, 'created_at':'3 days ago', 'creditor_cpf_cnpj':'123123123', 'debtor_cpf_cnpj':'456456456'},
+          {'debito':200, 'created_at':'6 days ago', 'creditor_cpf_cnpj':'909090909', 'debtor_cpf_cnpj':'456456456'},
+          {'debito':300, 'created_at':'9 days ago', 'creditor_cpf_cnpj':'102010201', 'debtor_cpf_cnpj':'456456456'},
+        ],
+        loggedUser: {name:'Joazinho', cpf_cnpj: '123123123'},
+        search: '456456456',
+        // showLogin: true,
+      }
+    })
+  </script>
+</body>
+
+</html>
