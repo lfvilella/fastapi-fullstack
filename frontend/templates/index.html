@@ -20,6 +20,27 @@
       color: #000000 !important;
     }
 
+    /* Login / SignUP */
+    .authentication {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    input {
+      margin-bottom: 8px;
+    }
+
+    .right-line {
+      border-right: 2px solid black;
+    }
+
+    /* Managment */
+    .managment {
+      margin-top: 20px;
+    }
+
     .list-debtors {
       padding: 20px;
       border: 1px solid black;
@@ -42,7 +63,37 @@
 
 <body>
   <div id="app">
-    <div class="container">
+    <!-- Login -->
+    <div class="modal-body authentication" v-if="showLogin">
+      <div class="container">
+        <div class="row text-center">
+          <div class="col-md-6 right-line">
+            <div class="login">
+              <h1>Login</h1>
+              <input type="text" placeholder="CPF or CNPJ">
+              <br>
+              <input type="text" placeholder="Password">
+              <br>
+              <button>login</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h1>Sign Up</h1>
+            <input type="text" placeholder="Name">
+            <br>
+            <input type="text" placeholder="CPF or CNPJ">
+            <br>
+            <input type="text" placeholder="Password">
+            <br>
+            <button>singup</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Managment -->
+    <div class="container managment" v-if="showLogin == false">
       <div class="row">
         <div class="col-md-8 text-left">
           <h1>Buscar Pêndencias/Cobranças:</h1>
@@ -80,25 +131,25 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <br><br>
+      <br><br>
 
-    <div class="container list-debtors">
-      <div class="not-found-charge text-center" v-if="chargesList.length == 0">
-        <i class="fas fa-times"></i>
-        <h3>Charge Not Found</h3>
-      </div>
-      <div class="list-group" v-for="charge in chargesList">
-        <div class="list-group-item list-group-item-action">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">Devedor: {{ charge.debtor_cpf_cnpj }}</h5>
-            <small>{{ charge.created_at }}</small>
+      <div class="list-debtors">
+        <div class="not-found-charge text-center" v-if="chargesList.length == 0">
+          <i class="fas fa-times"></i>
+          <h3>Charge Not Found</h3>
+        </div>
+        <div class="list-group" v-for="charge in chargesList">
+          <div class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Devedor: {{ charge.debtor_cpf_cnpj }}</h5>
+              <small>{{ charge.created_at }}</small>
+            </div>
+            <p class="mb-1">R$ {{ charge.debito }}</p>
+            <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
+            <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i
+                class="fas fa-handshake"></i></button>
           </div>
-          <p class="mb-1">R$ {{ charge.debito }}</p>
-          <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
-          <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i
-              class="fas fa-handshake"></i></button>
         </div>
       </div>
     </div>
@@ -130,7 +181,7 @@
         ],
         loggedUser: { name: 'Joazinho', cpf_cnpj: '123123123' },
         search: '456456456',
-        // showLogin: true,
+        showLogin: false,
       }
     })
   </script>
