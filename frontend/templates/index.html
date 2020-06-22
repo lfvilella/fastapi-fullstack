@@ -34,15 +34,14 @@
       font-size: 50pt;
     }
 
-    .margin-bottom {
-      margin: 10px 0;
+    .margin-top {
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
   <div id="app">
-    <br>
     <div class="container">
       <div class="row">
         <div class="col-md-8 text-left">
@@ -51,9 +50,34 @@
           <button><i class="fas fa-search"></i></button>
         </div>
         <div class="col-md-4 text-right">
-          <button class="margin-bottom" >Incluir Débito <i class="fas fa-hand-holding-usd"></i></button>
-          <br>
-          <button >Excluir Débito <i class="fas fa-handshake"></i></button>
+          <button type="button" class="btn btn-primary margin-top" data-toggle="modal" data-target="#addDebitoModal">
+            Incluir Débito <i class="fas fa-hand-holding-usd"></i>
+          </button>
+          <!-- Modal -->
+          <div class="modal fade" id="addDebitoModal" tabindex="-1" role="dialog" aria-labelledby="addDebitoModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="addDebitoModalLabel">Incluir Débito</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body text-center">
+                  <input type="text" placeholder="Nome">
+                  <br>
+                  <input type="text" placeholder="CPF ou CNPJ">
+                  <br>
+                  <input type="text" placeholder="Valor">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                  <button type="button" class="btn btn-primary">Adicionar Débito</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -73,7 +97,8 @@
           </div>
           <p class="mb-1">R$ {{ charge.debito }}</p>
           <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
-          <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">botao</button>
+          <button v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i
+              class="fas fa-handshake"></i></button>
         </div>
       </div>
     </div>
@@ -98,12 +123,12 @@
       el: '#app',
       data: {
         chargesList: [
-          {'debito':100, 'created_at':'3 days ago', 'creditor_cpf_cnpj':'123123123', 'debtor_cpf_cnpj':'456456456'},
-          {'debito':500, 'created_at':'3 days ago', 'creditor_cpf_cnpj':'123123123', 'debtor_cpf_cnpj':'456456456'},
-          {'debito':200, 'created_at':'6 days ago', 'creditor_cpf_cnpj':'909090909', 'debtor_cpf_cnpj':'456456456'},
-          {'debito':300, 'created_at':'9 days ago', 'creditor_cpf_cnpj':'102010201', 'debtor_cpf_cnpj':'456456456'},
+          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
+          { 'debito': 300, 'created_at': '9 days ago', 'creditor_cpf_cnpj': '102010201', 'debtor_cpf_cnpj': '456456456' },
         ],
-        loggedUser: {name:'Joazinho', cpf_cnpj: '123123123'},
+        loggedUser: { name: 'Joazinho', cpf_cnpj: '123123123' },
         search: '456456456',
         // showLogin: true,
       }
