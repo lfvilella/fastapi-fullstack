@@ -152,7 +152,8 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                  <button type="button" class="btn btn-primary" v-on:click="createCharge(chargeData)">Adicionar Débito</button>
+                  <button type="button" class="btn btn-primary" v-on:click="createCharge(chargeData)">
+                    Adicionar Débito</button>
                 </div>
               </div>
             </div>
@@ -165,7 +166,7 @@
       <div class="list-debtors overflow-auto">
         <div class="not-found-charge text-center" v-if="chargesList.length == 0">
           <i class="fas fa-times"></i>
-          <h1>Charge Not Found</h1>
+          <h1>{{ errorCharge }}</h1>
         </div>
         <div class="list-group" v-for="charge in chargesList">
           <div style="margin-bottom: 10px !important;" class="list-group-item list-group-item-action">
@@ -176,8 +177,9 @@
             <p class="mb-1">R$ {{ charge.debito }}</p>
             <small>Credor: {{ charge.creditor_cpf_cnpj }}</small>
             <button style="font-size: 10pt;" class="btn btn-success"
-              v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj">Excluir Débito <i style="font-size: 12pt;"
-                class="fas fa-handshake"></i></button>
+              v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj"
+              v-on:click="doPayment({ id: charge.id, creditor_cpf_cnpj:charge.creditor_cpf_cnpj })">
+              Excluir Débito <i style="font-size: 12pt;" class="fas fa-handshake"></i></button>
           </div>
         </div>
       </div>
@@ -213,11 +215,7 @@
           "creditor_cpf_cnpj": '71484654862',
           "debito": 1000.26
         },
-        chargesList: [
-          { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
-          { 'debito': 200, 'created_at': '6 days ago', 'creditor_cpf_cnpj': '909090909', 'debtor_cpf_cnpj': '456456456' },
-        ],
+        chargesList: [],
         loggedUser: { name: '', cpf_cnpj: '', apiKey: null },
         search: '34792144697825',
         showLogin: true,
@@ -225,6 +223,7 @@
         // Errors:
         errorLogin: '',
         errorSignUp: '',
+        errorCharge: 'Vazio',
       },
       methods: {
         doLogin: function (loginData) {
@@ -296,11 +295,18 @@
           }
           axios.get('/api/v.1/charge', { params: params })
             .then((response) => {
-              this.chargesList = response.data;
+              debugger
+              this.chargesList = [];
+              for (i = 0; i < response.data.length; i++) {
+                if (response.data[i].is_active === true) {
+                  this.chargesList.push(response.data[i]);
+                }
+              }
             })
             .catch((error) => {
               if ([404, 422].indexOf(error.response.status) >= 0) {
                 this.chargesList = [];
+                this.errorCharge = "Pendência não Encontrada"
                 return;
               }
               console.log(error.response.data);
@@ -327,6 +333,21 @@
                 return;
               }
               console.log(error.response.data);
+            });
+        },
+
+        doPayment: function (paymentData) {
+          const params = {
+            api_key: this.loggedUser.apiKey,
+          }
+          axios.post('/api/v.1/charge/payment', paymentData, { params: params })
+            .then((response) => {
+              debugger
+              console.log(response)
+            })
+            .catch((error) => {
+              debugger
+              console.log(error);
             });
         }
       }
