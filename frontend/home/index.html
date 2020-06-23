@@ -295,7 +295,6 @@
           }
           axios.get('/api/v.1/charge', { params: params })
             .then((response) => {
-              debugger
               this.chargesList = [];
               for (i = 0; i < response.data.length; i++) {
                 if (response.data[i].is_active === true) {
@@ -306,7 +305,7 @@
             .catch((error) => {
               if ([404, 422].indexOf(error.response.status) >= 0) {
                 this.chargesList = [];
-                this.errorCharge = "Pendência não Encontrada"
+                this.errorCharge = "Pendência Não Encontrada"
                 return;
               }
               console.log(error.response.data);
@@ -319,11 +318,9 @@
           }
           axios.post('/api/v.1/charge', chargeData, { params: params })
             .then((response) => {
-              debugger
               console.log(response)
             })
             .catch((error) => {
-              debugger
               if (error.response.status === 422) {
                 console.log(error.response.data.detail[0].msg);
                 return;
@@ -342,11 +339,10 @@
           }
           axios.post('/api/v.1/charge/payment', paymentData, { params: params })
             .then((response) => {
-              debugger
-              console.log(response)
+              this.getCharges(this.search);
+              console.log(response);
             })
             .catch((error) => {
-              debugger
               console.log(error);
             });
         }
