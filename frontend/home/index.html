@@ -152,8 +152,8 @@
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                  <button type="button" class="btn btn-primary" v-on:click="createCharge(chargeData)">
-                    Adicionar Débito</button>
+                  <button type="button" class="btn btn-primary" v-on:click="createCharge(chargeData)"
+                    data-dismiss="modal">Adicionar Débito</button>
                 </div>
               </div>
             </div>
@@ -318,6 +318,7 @@
           }
           axios.post('/api/v.1/charge', chargeData, { params: params })
             .then((response) => {
+              this.getCharges(this.search);
               console.log(response)
             })
             .catch((error) => {
