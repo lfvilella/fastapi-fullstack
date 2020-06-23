@@ -23,7 +23,7 @@ class TestLogin:
         )
 
     def build_url(self):
-        return f"/v.1/authenticate"
+        return f"/api/v.1/authenticate"
 
     def test_valid_returns_ok(self, payload, create_db_entity_with_password):
         response = client.post(
@@ -103,7 +103,7 @@ class TestLogin:
 @pytest.mark.usefixtures("use_db")
 class TestLogout:
     def build_url(self, api_key):
-        return f"/v.1/authenticate?api_key={api_key}"
+        return f"/api/v.1/authenticate?api_key={api_key}"
 
     def test_returns_no_content(self, create_db_entity):
         response = client.delete(self.build_url(create_db_entity.api_key))

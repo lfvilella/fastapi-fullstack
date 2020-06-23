@@ -25,7 +25,7 @@ class TestCreateCharge:
         }
 
     def build_url(self, api_key=None):
-        return f"/v.1/charge?api_key={api_key}"
+        return f"/api/v.1/charge?api_key={api_key}"
 
     def test_valid_returns_created(self, payload_charge, create_db_entity):
         response = client.post(
@@ -188,7 +188,7 @@ def create_db_charge(payload, session_maker):
 @pytest.mark.usefixtures("use_db")
 class TestReadCharge:
     def build_url(self, charge_id, api_key=None):
-        return f"/v.1/charge/{charge_id}?api_key={api_key}"
+        return f"/api/v.1/charge/{charge_id}?api_key={api_key}"
 
     def test_valid_returns_ok(self, create_db_charge):
         request = client.get(
@@ -254,7 +254,7 @@ class TestFilterCharge:
         creditor_cpf_cnpj=None,
         is_active=None,
     ):
-        url = f"/v.1/charge?api_key={api_key}"
+        url = f"/api/v.1/charge?api_key={api_key}"
         if debtor_cpf_cnpj:
             url += f"&debtor_cpf_cnpj={debtor_cpf_cnpj}"
 
@@ -398,7 +398,7 @@ class TestFilterCharge:
 @pytest.mark.usefixtures("use_db")
 class TestPayment:
     def build_url(self, api_key=None):
-        return f"/v.1/charge/payment?api_key={api_key}"
+        return f"/api/v.1/charge/payment?api_key={api_key}"
 
     def test_valid_payment_returns_ok(self, create_db_charge):
         response = client.post(
