@@ -144,15 +144,15 @@
                   </button>
                 </div>
                 <div class="modal-body text-center">
-                  <input type="text" placeholder="Nome" required>
+                  <input type="text" placeholder="Nome" v-model="chargeData.debtor.name">
                   <br>
-                  <input type="text" placeholder="CPF ou CNPJ" required>
+                  <input type="text" placeholder="CPF ou CNPJ" v-model="chargeData.debtor.cpf_cnpj">
                   <br>
-                  <input type="text" placeholder="Valor" required>
+                  <input type="text" placeholder="Valor" v-model="chargeData.debito">
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                  <button type="button" class="btn btn-primary">Adicionar Débito</button>
+                  <button type="button" class="btn btn-primary" v-on:click="createCharge(chargeData)">Adicionar Débito</button>
                 </div>
               </div>
             </div>
@@ -205,6 +205,14 @@
       data: {
         loginData: { cpf_cnpj: '71484654862', password: '123change' },
         signUpData: { name: 'Loja do Ze', cpf_cnpj: '34792144697825', password: '123change' },
+        chargeData: {
+          "debtor": {
+            "name": "Loja do Ze",
+            "cpf_cnpj": "34792144697825"
+          },
+          "creditor_cpf_cnpj": '71484654862',
+          "debito": 1000.26
+        },
         chargesList: [
           { 'debito': 100, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
           { 'debito': 500, 'created_at': '3 days ago', 'creditor_cpf_cnpj': '123123123', 'debtor_cpf_cnpj': '456456456' },
@@ -298,6 +306,29 @@
               console.log(error.response.data);
             });
         },
+
+        createCharge: function (chargeData) {
+          const params = {
+            api_key: this.loggedUser.apiKey,
+          }
+          axios.post('/api/v.1/charge', chargeData, { params: params })
+            .then((response) => {
+              debugger
+              console.log(response)
+            })
+            .catch((error) => {
+              debugger
+              if (error.response.status === 422) {
+                console.log(error.response.data.detail[0].msg);
+                return;
+              }
+              if (error.response.status === 400) {
+                console.log(error.response.data.detail);
+                return;
+              }
+              console.log(error.response.data);
+            });
+        }
       }
     })
   </script>
