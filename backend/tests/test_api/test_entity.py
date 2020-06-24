@@ -11,12 +11,15 @@ client = TestClient(api.app)
 
 @pytest.mark.usefixtures("use_db")
 class TestCreateEntity:
+    def build_url(self):
+        return "/api/v.1/entity"
+
     def test_valid_returns_created(self, payload):
-        response = client.post("/api/v.1/entity", json=payload)
+        response = client.post(self.build_url(), json=payload)
         assert response.status_code == 201
 
     def test_valid_returns_complete_body(self, payload):
-        response = client.post("/api/v.1/entity", json=payload)
+        response = client.post(self.build_url(), json=payload)
         assert response.json() == {
             "name": payload["name"],
             "cpf_cnpj": payload["cpf_cnpj"],
@@ -24,7 +27,7 @@ class TestCreateEntity:
         }
 
     def test_valid_saves_on_db(self, payload, session_maker):
-        response = client.post("/api/v.1/entity", json=payload)
+        response = client.post(self.build_url(), json=payload)
         assert response.ok
 
         assert session_maker().query(models.Entity).count() == 1
@@ -38,7 +41,7 @@ class TestCreateEntity:
 
     def test_invalid_cpf_cnpj_returns_error_invalid_cpf_cnpj(self, payload):
         payload["cpf_cnpj"] = "12345678910"
-        response = client.post("/api/v.1/entity", json=payload)
+        response = client.post(self.build_url(), json=payload)
         assert not response.ok
         assert (
             response.json().get("detail").pop(0).get("msg")
@@ -46,12 +49,12 @@ class TestCreateEntity:
         )
 
     def test_empity_returns_unprocessable_entity(self):
-        response = client.post("/api/v.1/entity", json={})
+        response = client.post(self.build_url(), json={})
         assert response.status_code == 422
 
     def test_existing_returns_bad_request(self, payload):
-        response = client.post("/api/v.1/entity", json=payload)
-        response = client.post("/api/v.1/entity", json=payload)
+        response = client.post(self.build_url(), json=payload)
+        response = client.post(self.build_url(), json=payload)
         assert response.status_code == 400
         assert response.json() == {"detail": "Entity already exist"}
 
