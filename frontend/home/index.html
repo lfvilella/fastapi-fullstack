@@ -292,15 +292,11 @@
           const params = {
             api_key: this.loggedUser.apiKey,
             debtor_cpf_cnpj: search,
+            is_active: true,
           }
           axios.get('/api/v.1/charge', { params: params })
             .then((response) => {
-              this.chargesList = [];
-              for (i = 0; i < response.data.length; i++) {
-                if (response.data[i].is_active === true) {
-                  this.chargesList.push(response.data[i]);
-                }
-              }
+              this.chargesList = response.data;
             })
             .catch((error) => {
               if ([404, 422].indexOf(error.response.status) >= 0) {
