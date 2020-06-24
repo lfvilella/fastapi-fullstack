@@ -9,7 +9,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = fastapi.FastAPI()
 _VERSION = "/api/v.1"
-_SESSION_KEY = 'api_key'
+_SESSION_KEY = "api_key"
 
 
 # Dependency
@@ -22,7 +22,9 @@ def get_db():
 
 
 def get_api_key_from_request(request: fastapi.Request):
-    return request.query_params.get(_SESSION_KEY) or request.cookies.get(_SESSION_KEY)
+    return request.query_params.get(_SESSION_KEY) or request.cookies.get(
+        _SESSION_KEY
+    )
 
 
 @app.exception_handler(data_access.DataAccessException)
@@ -72,7 +74,9 @@ def read_entity_logged(
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    return data_access.get_entity_by_api_key(db, get_api_key_from_request(request))
+    return data_access.get_entity_by_api_key(
+        db, get_api_key_from_request(request)
+    )
 
 
 @app.get(_VERSION + "/entity", response_model=typing.List[schemas.Entity])
@@ -98,7 +102,9 @@ def create_charge(
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    return data_access.create_charge(db=db, charge=charge, api_key=get_api_key_from_request(request))
+    return data_access.create_charge(
+        db=db, charge=charge, api_key=get_api_key_from_request(request)
+    )
 
 
 @app.get(
@@ -131,7 +137,9 @@ def filter_charge(
         is_active=is_active,
     )
     return data_access.filter_charge(
-        db, charge_filter=charge_filter, api_key=get_api_key_from_request(request),
+        db,
+        charge_filter=charge_filter,
+        api_key=get_api_key_from_request(request),
     )
 
 
@@ -143,7 +151,9 @@ def charge_payment(
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     return data_access.payment_charge(
-        db, payment_info=payment_info, api_key=get_api_key_from_request(request)
+        db,
+        payment_info=payment_info,
+        api_key=get_api_key_from_request(request),
     )
 
 
@@ -167,7 +177,8 @@ def authenticate_login(
 @app.delete(_VERSION + "/authenticate", status_code=204)
 def authenticate_logout(
     request: fastapi.Request,
-    api_key: str = None, db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+    api_key: str = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     data_access.delete_api_key(db, api_key=get_api_key_from_request(request))
     return {}

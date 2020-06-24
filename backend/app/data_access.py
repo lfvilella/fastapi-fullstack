@@ -45,9 +45,13 @@ def get_entity_by_cpf_cnpj(
     return db_entity
 
 
-def get_entity_by_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.Entity:
+def get_entity_by_api_key(
+    db: sqlalchemy.orm.Session, api_key: str
+) -> models.Entity:
     db_api_key = check_api_key(db, api_key=api_key)
-    return get_entity_by_cpf_cnpj(db, db_api_key.cpf_cnpj, validate_api_key=False, raise_error=True)
+    return get_entity_by_cpf_cnpj(
+        db, db_api_key.cpf_cnpj, validate_api_key=False, raise_error=True
+    )
 
 
 def get_entity_by_cpf_cnpj_and_password(

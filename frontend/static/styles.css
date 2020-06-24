@@ -1,3 +1,63 @@
-h1 {
-    color: green;
+* {
+  color: #000000 !important;
+}
+
+button {
+  color: white !important;
+}
+
+button i {
+  color: white !important;
+}
+
+/* Login / SignUP */
+
+.authentication {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+input {
+  margin-bottom: 8px;
+}
+
+.right-line {
+  border-right: 2px solid black;
+}
+
+/* Managment */
+
+.logout {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.managment {
+  margin-top: 20px;
+}
+
+.list-debtors {
+  height: 70vh;
+  padding: 20px;
+  border: 1px solid black;
+  border-radius: 10px;
+}
+
+.not-found-charge {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+}
+
+.not-found-charge i {
+  font-size: 90pt;
+}
+
+.margin-top {
+  margin-top: 10px;
 }
