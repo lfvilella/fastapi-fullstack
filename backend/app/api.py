@@ -9,6 +9,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = fastapi.FastAPI()
 _VERSION = "/api/v.1"
+_SESSION_KEY = 'api_key'
 
 
 # Dependency
@@ -18,6 +19,10 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def get_api_key_from_request(request: fastapi.Request):
+    return request.query_params.get(_SESSION_KEY) or request.cookies.get(_SESSION_KEY)
 
 
 @app.exception_handler(data_access.DataAccessException)
@@ -61,6 +66,15 @@ def read_entity(
     )
 
 
+@app.get(_VERSION + "/entity-logged", response_model=schemas.Entity)
+def read_entity_logged(
+    request: fastapi.Request,
+    api_key: str = None,
+    db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
+):
+    return data_access.get_entity_by_api_key(db, get_api_key_from_request(request))
+
+
 @app.get(_VERSION + "/entity", response_model=typing.List[schemas.Entity])
 def filter_entity(
     type_entity: schemas.EntityTypeEnum = None,
@@ -79,11 +93,12 @@ def filter_entity(
     response_model=schemas.ChargeDatabase,
 )
 def create_charge(
+    request: fastapi.Request,
     charge: schemas.ChargeCreate,
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    return data_access.create_charge(db=db, charge=charge, api_key=api_key)
+    return data_access.create_charge(db=db, charge=charge, api_key=get_api_key_from_request(request))
 
 
 @app.get(
@@ -103,6 +118,7 @@ def read_charge(
     _VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase]
 )
 def filter_charge(
+    request: fastapi.Request,
     debtor_cpf_cnpj: schemas.CpfOrCnpj = None,
     creditor_cpf_cnpj: schemas.CpfOrCnpj = None,
     is_active: bool = None,
@@ -115,23 +131,25 @@ def filter_charge(
         is_active=is_active,
     )
     return data_access.filter_charge(
-        db, charge_filter=charge_filter, api_key=api_key
+        db, charge_filter=charge_filter, api_key=get_api_key_from_request(request),
     )
 
 
 @app.post(_VERSION + "/charge/payment", response_model=schemas.ChargeDatabase)
 def charge_payment(
+    request: fastapi.Request,
     payment_info: schemas.ChargePayment,
     api_key: str = None,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
     return data_access.payment_charge(
-        db, payment_info=payment_info, api_key=api_key
+        db, payment_info=payment_info, api_key=get_api_key_from_request(request)
     )
 
 
 @app.post(_VERSION + "/authenticate", response_model=schemas.APIKey)
 def authenticate_login(
+    response: fastapi.Response,
     login: schemas.Authenticate,
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
@@ -140,12 +158,16 @@ def authenticate_login(
     )
 
     api_key = data_access.create_api_key(db, cpf_cnpj=entity.cpf_cnpj)
+    if login.set_cookie:
+        response.set_cookie(key=_SESSION_KEY, value=api_key)
+
     return schemas.APIKey(api_key=api_key, cpf_cnpj=entity.cpf_cnpj)
 
 
 @app.delete(_VERSION + "/authenticate", status_code=204)
 def authenticate_logout(
+    request: fastapi.Request,
     api_key: str = None, db: sqlalchemy.orm.Session = fastapi.Depends(get_db),
 ):
-    data_access.delete_api_key(db, api_key=api_key)
+    data_access.delete_api_key(db, api_key=get_api_key_from_request(request))
     return {}

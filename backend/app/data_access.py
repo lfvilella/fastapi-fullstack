@@ -45,6 +45,11 @@ def get_entity_by_cpf_cnpj(
     return db_entity
 
 
+def get_entity_by_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.Entity:
+    db_api_key = check_api_key(db, api_key=api_key)
+    return get_entity_by_cpf_cnpj(db, db_api_key.cpf_cnpj, validate_api_key=False, raise_error=True)
+
+
 def get_entity_by_cpf_cnpj_and_password(
     db: sqlalchemy.orm.Session, cpf_cnpj: str, password: str
 ) -> models.Entity:
@@ -65,13 +70,15 @@ def create_entity(
     persist: bool = True,
 ) -> models.Entity:
 
-    if get_entity_by_cpf_cnpj(
-        db, cpf_cnpj=entity.cpf_cnpj, validate_api_key=False
-    ):
+    db_entity = get_entity_by_cpf_cnpj(
+        db, cpf_cnpj=entity.cpf_cnpj, validate_api_key=False,
+    )
+    if db_entity and db_entity.hashed_password:
         raise ValidationError("Entity already exist")
 
-    db_entity = models.Entity(**entity.dict())
-    db.add(db_entity)
+    db_entity = db_entity or models.Entity()
+    db_entity.cpf_cnpj = entity.cpf_cnpj
+    db_entity.name = entity.name
 
     if password:
         entity_set_password(
@@ -82,6 +89,7 @@ def create_entity(
             persist=False,
         )
 
+    db.add(db_entity)
     if persist:
         db.commit()
 
@@ -180,7 +188,7 @@ def delete_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
         db.delete(item)
 
     db.commit()
-    return filter_api_key
+    return db_api_key
 
 
 def check_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:

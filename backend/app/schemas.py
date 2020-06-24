@@ -110,6 +110,7 @@ class ChargePayment(pydantic.BaseModel):
 class Authenticate(pydantic.BaseModel):
     cpf_cnpj: CpfOrCnpj
     password: str
+    set_cookie: bool = False
 
 
 class APIKey(pydantic.BaseModel):

@@ -198,12 +198,17 @@
     crossorigin="anonymous"></script>
 
   <!-- VueJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment-with-locales.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/locale/pt-br.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
   <script>
     var app = new Vue({
       el: '#app',
+      created: function() {
+        this.getLoggedEntity();
+      },
       data: {
         loginData: { cpf_cnpj: '71484654862', password: '123change' },
         signUpData: { name: 'Loja do Ze', cpf_cnpj: '34792144697825', password: '123change' },
@@ -216,7 +221,7 @@
           "debito": 1000.26
         },
         chargesList: [],
-        loggedUser: { name: '', cpf_cnpj: '', apiKey: null },
+        loggedUser: { name: '', cpf_cnpj: ''},
         search: '34792144697825',
         showLogin: true,
 
@@ -226,14 +231,33 @@
         errorCharge: 'Vazio',
       },
       methods: {
+        getLoggedEntity: function () {
+          return axios.get('/api/v.1/entity-logged')
+            .then((response) => {
+              this.loggedUser.cpf_cnpj = response.data.cpf_cnpj;
+              this.loggedUser.name = response.data.name;
+              this.showLogin = false;
+            })
+            .catch((error) => {
+              if (error.response.status === 422) {
+                this.errorLogin = error.response.data.detail[0].msg;
+                return;
+              }
+              if (error.response.status === 400) {
+                this.errorLogin = error.response.data.detail;
+                return;
+              }
+              console.log(error.response.data);
+            });
+        },
         doLogin: function (loginData) {
           const { cpf_cnpj, password } = loginData;
           return axios.post('/api/v.1/authenticate', {
             cpf_cnpj: cpf_cnpj,
             password: password,
+            set_cookie: true,
           })
             .then((response) => {
-              this.loggedUser.apiKey = response.data.api_key;
               this.loggedUser.cpf_cnpj = response.data.cpf_cnpj;
               this.showLogin = false;
             })
@@ -251,8 +275,7 @@
         },
 
         doLogout: function () {
-          const params = { api_key: this.loggedUser.apiKey, }
-          axios.delete('/api/v.1/authenticate', { params: params })
+          axios.delete('/api/v.1/authenticate')
             .then((response) => {
               this.showLogin = true;
               console.log(response);
@@ -290,13 +313,22 @@
 
         getCharges: function (search) {
           const params = {
-            api_key: this.loggedUser.apiKey,
             debtor_cpf_cnpj: search,
             is_active: true,
           }
           axios.get('/api/v.1/charge', { params: params })
             .then((response) => {
-              this.chargesList = response.data;
+              this.chargesList = response.data.map(
+                row => ({
+                  created_at: moment(row.created_at).format('L'),
+                  creditor_cpf_cnpj: row.creditor_cpf_cnpj,
+                  debito: row.debito,
+                  debtor_cpf_cnpj: row.debtor_cpf_cnpj,
+                  id: row.id,
+                  is_active: row.is_active,
+                  payed_at: row.payed_at,
+                })
+              );
             })
             .catch((error) => {
               if ([404, 422].indexOf(error.response.status) >= 0) {
@@ -309,10 +341,7 @@
         },
 
         createCharge: function (chargeData) {
-          const params = {
-            api_key: this.loggedUser.apiKey,
-          }
-          axios.post('/api/v.1/charge', chargeData, { params: params })
+          axios.post('/api/v.1/charge', chargeData)
             .then((response) => {
               this.getCharges(this.search);
               console.log(response)
@@ -331,10 +360,7 @@
         },
 
         doPayment: function (paymentData) {
-          const params = {
-            api_key: this.loggedUser.apiKey,
-          }
-          axios.post('/api/v.1/charge/payment', paymentData, { params: params })
+          axios.post('/api/v.1/charge/payment', paymentData)
             .then((response) => {
               this.getCharges(this.search);
               console.log(response);
