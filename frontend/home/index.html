@@ -24,8 +24,10 @@
 <body>
   <div id="app">
     <!-- Loading -->
-    <div class="spinner-border" role="status" v-if="isLoading">
-      <span class="sr-only">Loading...</span>
+    <div class="loading" v-if="isLoading">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
     </div>
 
     <!-- Login -->
@@ -118,8 +120,13 @@
 
       <div class="list-debtors overflow-auto">
         <div class="not-found-charge text-center" v-if="chargesList.length == 0">
-          <i class="fas fa-times"></i>
-          <h1>{{ errorCharge }}</h1>
+          <div class="spinner-border" role="status" v-if="isLoadingCharge">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <div v-if="isLoadingCharge == false">
+            <i class="fas fa-times"></i>
+            <h1>{{ errorCharge }}</h1>
+          </div>
         </div>
         <div class="list-group" v-for="charge in chargesList">
           <div style="margin-bottom: 10px !important;" class="list-group-item list-group-item-action">
