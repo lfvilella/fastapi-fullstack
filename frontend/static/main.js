@@ -18,11 +18,12 @@ var app = new Vue({
     loggedUser: { name: '', cpf_cnpj: '' },
     search: '34792144697825',
     showLogin: true,
+    isLoading: false,
 
     // Errors:
     errorLogin: '',
     errorSignUp: '',
-    errorCharge: 'Vazio',
+    errorCharge: '',
   },
   methods: {
     getLoggedEntity: function () {
@@ -162,6 +163,6 @@ var app = new Vue({
         .catch((error) => {
           console.log(error);
         });
-    }
+    },
   }
 })
