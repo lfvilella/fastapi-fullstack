@@ -46,6 +46,15 @@ input {
   border-right: 2px solid black;
 }
 
+@media(max-width:990px) {
+  .right-line {
+    border-right: none;
+    border-bottom: 2px solid black;
+    padding-bottom: 30px;
+    margin-bottom: 20px;
+  }
+}
+
 /* Managment */
 
 nav a, nav i {

@@ -5,19 +5,19 @@ var app = new Vue({
     this.getHomePage();
   },
   data: {
-    loginData: { cpf_cnpj: '71484654862', password: '123change' },
-    signUpData: { name: 'Loja do Ze', cpf_cnpj: '34792144697825', password: '123change' },
+    loginData: { cpf_cnpj: '', password: '' },
+    signUpData: { name: '', cpf_cnpj: '', password: '' },
     chargeData: {
       "debtor": {
-        "name": "Loja do Ze",
-        "cpf_cnpj": "34792144697825"
+        "name": "",
+        "cpf_cnpj": ""
       },
-      "creditor_cpf_cnpj": '71484654862',
-      "debito": 1000.26
+      "creditor_cpf_cnpj": "",
+      "debito": 0
     },
     chargesList: [],
     loggedUser: { name: '', cpf_cnpj: '' },
-    search: '34792144697825',
+    search: '',
     showLogin: true,
     isLoading: true,
     isLoadingCharge: false,
@@ -26,6 +26,7 @@ var app = new Vue({
     errorLogin: '',
     errorSignUp: '',
     errorCharge: '',
+    errorCreateCharge: '',
   },
   methods: {
     getHomePage: function () {
@@ -48,11 +49,11 @@ var app = new Vue({
         })
         .catch((error) => {
           if (error.response.status === 422) {
-            this.errorLogin = error.response.data.detail[0].msg;
+            this.errorLogin = 'CPF/CNPJ ou Senha Inválido!';
             return;
           }
           if (error.response.status === 400) {
-            this.errorLogin = error.response.data.detail;
+            this.errorLogin = 'CPF/CNPJ ou Senha Inválido!';
             return;
           }
           console.log(error.response.data);
@@ -76,11 +77,11 @@ var app = new Vue({
         .catch((error) => {
           this.isLoading = false;
           if (error.response.status === 422) {
-            this.errorLogin = error.response.data.detail[0].msg;
+            this.errorLogin = 'CPF/CNPJ ou Senha Inválido!';
             return;
           }
           if (error.response.status === 400) {
-            this.errorLogin = error.response.data.detail;
+            this.errorLogin = 'CPF/CNPJ ou Senha Inválido!';
             return;
           }
           console.log(error.response.data);
@@ -110,20 +111,24 @@ var app = new Vue({
         password: password,
       })
         .then((response) => {
+          this.isLoading = false;
+          if (password == "") {
+            this.errorSignUp = 'A Senha está inválida!';
+            return;
+          }
           this.doLogin({
             cpf_cnpj: cpf_cnpj,
             password: password,
           });
-          this.isLoading = false;
         })
         .catch((error) => {
           this.isLoading = false;
           if (error.response.status === 422) {
-            this.errorSignUp = error.response.data.detail[0].msg;
+            this.errorSignUp = 'CPF/CNPJ está inválido!';
             return;
           }
           if (error.response.status === 400) {
-            this.errorSignUp = error.response.data.detail;
+            this.errorSignUp = 'CPF/CNPJ já está cadastrado!';
             return;
           }
           console.log(error);
@@ -164,15 +169,42 @@ var app = new Vue({
 
     createCharge: function (chargeData) {
       this.isLoading = true;
+      chargeData.creditor_cpf_cnpj = this.loggedUser.cpf_cnpj;
       axios.post('/api/v.1/charge', chargeData)
         .then((response) => {
+          this.isLoading = false;
+          if (this.chargeData.debtor.name == "") {
+            this.errorCreateCharge = 'Campo nome está vazio.';
+            return;
+          }
           this.getCharges(this.search);
           console.log(response)
-          this.isLoading = false;
         })
         .catch((error) => {
           this.isLoading = false;
           if (error.response.status === 422) {
+            error_msg = error.response.data.detail[0].msg;
+            switch (error_msg) {
+              case 'You can not add debt for yourself':
+                this.errorCreateCharge = 'Você não pode adicionar débitos para você mesmo.';
+                return;
+
+              case 'ensure this value is greater than 0':
+                this.errorCreateCharge = 'O valor do débito tem que ser maior que 0.';
+                return;
+
+              case 'value is not a valid float':
+                this.errorCreateCharge = 'Campo valor está inválido. Exemplo: 100.50';
+                return;
+
+              case 'Invalid CPF / CNPJ':
+                this.errorCreateCharge = 'CPF/CNPJ inválido.';
+                return;
+
+              default:
+                this.errorCreateCharge = 'Campos Inválidos.'
+
+            }
             console.log(error.response.data.detail[0].msg);
             return;
           }

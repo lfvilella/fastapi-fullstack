@@ -34,29 +34,31 @@
     <div class="authentication" v-if="showLogin">
       <div class="container">
         <div class="row text-center">
-          <div class="col-md-6 right-line">
+          <div class="col-lg-6 right-line">
             <div class="login">
               <h1>Login</h1>
-              <input type="text" placeholder="CPF or CNPJ" v-model="loginData.cpf_cnpj" required>
+              <input type="text" placeholder="CPF or CNPJ" v-model="loginData.cpf_cnpj">
               <br>
-              <input type="password" placeholder="Password" v-model="loginData.password" required>
+              <input type="password" placeholder="Password" v-model="loginData.password">
               <br>
-              {{ errorLogin }}
-              <br v-if="errorLogin">
+              <div class="alert alert-danger" role="alert" v-if="errorLogin">
+                {{ errorLogin }}
+              </div>
               <button style="color: black !important;" v-on:click="doLogin(loginData)">login</button>
             </div>
           </div>
 
-          <div class="col-md-6">
+          <div class="col-lg-6">
             <h1>Sign Up</h1>
-            <input type="text" placeholder="Name" v-model="signUpData.name" required>
+            <input type="text" placeholder="Name" v-model="signUpData.name">
             <br>
-            <input type="text" placeholder="CPF or CNPJ" v-model="signUpData.cpf_cnpj" required>
+            <input type="text" placeholder="CPF or CNPJ" v-model="signUpData.cpf_cnpj">
             <br>
-            <input type="password" placeholder="Password" v-model="signUpData.password" required>
+            <input type="password" placeholder="Password" v-model="signUpData.password">
             <br>
-            {{ errorSignUp }}
-            <br v-if="errorSignUp">
+            <div class="alert alert-warning" role="alert" v-if="errorSignUp">
+              {{ errorSignUp }}
+            </div>
             <button style="color: black !important;" v-on:click="doSignUp()">singup</button>
           </div>
         </div>
@@ -76,7 +78,7 @@
       <div class="row">
         <div class="col-sm-6 text-left">
           <h1 style="font-size: 20pt;">Pesquisar Pêndencias:</h1>
-          <input type="text" placeholder="Buscar Devedor" v-model="search" required>
+          <input type="text" placeholder="Buscar Devedor" v-model="search">
           <button class="btn btn-primary" v-on:click="getCharges(search)"><i class="fas fa-search"></i></button>
         </div>
         <div class="col-sm-6 text-right">
@@ -104,6 +106,9 @@
                   <input type="text" placeholder="CPF ou CNPJ" v-model="chargeData.debtor.cpf_cnpj">
                   <br>
                   <input type="text" placeholder="Valor" v-model="chargeData.debito">
+                  <div class="alert alert-danger" role="alert" v-if="errorCreateCharge">
+                    {{ errorCreateCharge }}
+                  </div>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
