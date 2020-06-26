@@ -24,7 +24,10 @@ Open API: http://localhost:8000/docs
 
 All resources need api_key except create_entity.
 
-![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/readme_img_api_page.png?raw=true)
+![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/api_page.png?raw=true)
+![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/login_page.png?raw=true)
+![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/raw_frontend.png?raw=true)
+![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/searching_charge.png?raw=true)
 
 ## Entity collection [ /api/v.1/entity ]
 
