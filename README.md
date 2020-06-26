@@ -9,6 +9,7 @@ I use to develop:
 - Fastapi
 - Sqlalchemy
 - Docker / docker-compose
+- VueJS
 
 ## To run locally
 ```
@@ -22,7 +23,7 @@ Open API: http://localhost:8000/docs
 
 # API Resources
 
-All resources need api_key except create_entity.
+All resources needs api_key except create_entity.
 
 ![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/api_page.png?raw=true)
 ![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/images_readme/login_page.png?raw=true)

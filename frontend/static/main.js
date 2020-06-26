@@ -52,10 +52,10 @@ var app = new Vue({
     },
 
     getHomePage: function () {
-      this.cleanAllMensagens();
       return axios.get('/')
         .then((response) => {
           this.isLoading = false;
+          this.cleanAllMensagens();
         })
         .catch((error) => {
           this.isLoading = false;
@@ -84,7 +84,6 @@ var app = new Vue({
     },
 
     doLogin: function (loginData) {
-      this.cleanAllMensagens();
       this.setLoadingState(true);
       const { cpf_cnpj, password } = loginData;
       return axios.post('/api/v.1/authenticate', {
@@ -97,6 +96,7 @@ var app = new Vue({
           this.showLogin = false;
           this.setLoadingState(false);
           console.log(response);
+          this.cleanAllMensagens();
         })
         .catch((error) => {
           this.setLoadingState(false);
@@ -113,13 +113,13 @@ var app = new Vue({
     },
 
     doLogout: function () {
-      this.cleanAllMensagens();
       this.setLoadingState(true);
       axios.delete('/api/v.1/authenticate')
         .then((response) => {
           this.showLogin = true;
           console.log(response);
           this.setLoadingState(false);
+          this.cleanAllMensagens();
         })
         .catch((error) => {
           this.setLoadingState(false);
@@ -128,7 +128,6 @@ var app = new Vue({
     },
 
     doSignUp: function () {
-      this.cleanAllMensagens();
       this.setLoadingState(true);
       const { name, cpf_cnpj, password } = this.signUpData;
       return axios.post('/api/v.1/entity', {
@@ -146,6 +145,7 @@ var app = new Vue({
             cpf_cnpj: cpf_cnpj,
             password: password,
           });
+          this.cleanAllMensagens();
         })
         .catch((error) => {
           this.setLoadingState(false);
