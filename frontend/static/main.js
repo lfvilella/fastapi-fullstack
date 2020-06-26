@@ -29,7 +29,30 @@ var app = new Vue({
     errorCreateCharge: '',
   },
   methods: {
+    cleanAllMensagens: function () {
+      this.errorLogin = '';
+      this.errorSignUp = '';
+      this.errorCharge = '';
+      this.errorCreateCharge = '';
+      this.loginData = { cpf_cnpj: '', password: '' };
+      this.signUpData = { name: '', cpf_cnpj: '', password: '' };
+      this.chargeData = {
+        "debtor": {
+          "name": "",
+          "cpf_cnpj": ""
+        },
+        "creditor_cpf_cnpj": "",
+        "debito": 0
+      };
+      return;
+    },
+
+    setLoadingState: function (value) {
+      return this.isLoading = value;
+    },
+
     getHomePage: function () {
+      this.cleanAllMensagens();
       return axios.get('/')
         .then((response) => {
           this.isLoading = false;
@@ -61,7 +84,8 @@ var app = new Vue({
     },
 
     doLogin: function (loginData) {
-      this.isLoading = true;
+      this.cleanAllMensagens();
+      this.setLoadingState(true);
       const { cpf_cnpj, password } = loginData;
       return axios.post('/api/v.1/authenticate', {
         cpf_cnpj: cpf_cnpj,
@@ -71,11 +95,11 @@ var app = new Vue({
         .then((response) => {
           this.loggedUser.cpf_cnpj = response.data.cpf_cnpj;
           this.showLogin = false;
-          this.isLoading = false;
+          this.setLoadingState(false);
           console.log(response);
         })
         .catch((error) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           if (error.response.status === 422) {
             this.errorLogin = 'CPF/CNPJ ou Senha Inválido!';
             return;
@@ -89,21 +113,23 @@ var app = new Vue({
     },
 
     doLogout: function () {
-      this.isLoading = true;
+      this.cleanAllMensagens();
+      this.setLoadingState(true);
       axios.delete('/api/v.1/authenticate')
         .then((response) => {
           this.showLogin = true;
           console.log(response);
-          this.isLoading = false;
+          this.setLoadingState(false);
         })
         .catch((error) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           console.log(error);
         });
     },
 
     doSignUp: function () {
-      this.isLoading = true;
+      this.cleanAllMensagens();
+      this.setLoadingState(true);
       const { name, cpf_cnpj, password } = this.signUpData;
       return axios.post('/api/v.1/entity', {
         name: name,
@@ -111,7 +137,7 @@ var app = new Vue({
         password: password,
       })
         .then((response) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           if (password == "") {
             this.errorSignUp = 'A Senha está inválida!';
             return;
@@ -122,7 +148,7 @@ var app = new Vue({
           });
         })
         .catch((error) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           if (error.response.status === 422) {
             this.errorSignUp = 'CPF/CNPJ está inválido!';
             return;
@@ -168,20 +194,21 @@ var app = new Vue({
     },
 
     createCharge: function (chargeData) {
-      this.isLoading = true;
+      this.setLoadingState(true);
       chargeData.creditor_cpf_cnpj = this.loggedUser.cpf_cnpj;
       axios.post('/api/v.1/charge', chargeData)
         .then((response) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           if (this.chargeData.debtor.name == "") {
             this.errorCreateCharge = 'Campo nome está vazio.';
             return;
           }
           this.getCharges(this.search);
+          this.cleanAllMensagens();
           console.log(response)
         })
         .catch((error) => {
-          this.isLoading = false;
+          this.setLoadingState(false);
           if (error.response.status === 422) {
             error_msg = error.response.data.detail[0].msg;
             switch (error_msg) {
