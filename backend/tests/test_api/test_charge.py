@@ -14,30 +14,30 @@ client = TestClient(api.app)
 @pytest.mark.usefixtures("use_db")
 class TestCreateCharge:
     @pytest.fixture
-    def payload_charge(self, create_db_entity):
+    def payload_charge(self, db_entity_fixture):
         return {
             "debtor": {
                 "name": "name-tester-without-entity",
                 "cpf_cnpj": "03497961786765",
             },
-            "creditor_cpf_cnpj": create_db_entity.entity.cpf_cnpj,
+            "creditor_cpf_cnpj": db_entity_fixture.entity.cpf_cnpj,
             "debito": 100,
         }
 
     def build_url(self, api_key=None):
         return f"/api/v.1/charge?api_key={api_key}"
 
-    def test_valid_returns_created(self, payload_charge, create_db_entity):
+    def test_valid_returns_created(self, payload_charge, db_entity_fixture):
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert response.status_code == 201
 
     def test_valid_returns_complete_body(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert (
             response.json().get("debtor_cpf_cnpj")
@@ -52,10 +52,10 @@ class TestCreateCharge:
         assert not response.json().get("payed_at")
 
     def test_valid_saves_on_db(
-        self, payload_charge, create_db_entity, session_maker
+        self, payload_charge, db_entity_fixture, session_maker
     ):
         client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
 
         assert session_maker().query(models.Charge).count() == 1
@@ -75,11 +75,11 @@ class TestCreateCharge:
         assert response.status_code == 403
 
     def test_invalid_cpf_cnpj_returns_error_invalid_cpf_cnpj(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -88,11 +88,11 @@ class TestCreateCharge:
         )
 
     def test_invalid_cpf_cnpj_returns_error_debtor_not_found(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         payload_charge["debtor"]["cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -101,11 +101,11 @@ class TestCreateCharge:
         )
 
     def test_invalid_creditor_cpf_cnpj_returns_error_invalid_cpf_cnpj(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         payload_charge["creditor_cpf_cnpj"] = "12345678910"
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -114,21 +114,21 @@ class TestCreateCharge:
         )
 
     def test_when_empity_returns_error_unprocessable_entity(
-        self, create_db_entity
+        self, db_entity_fixture
     ):
         response = client.post(
-            self.build_url(create_db_entity.api_key), json={}
+            self.build_url(db_entity_fixture.api_key), json={}
         )
         assert response.status_code == 422
 
     def test_when_add_debt_to_yourself_returns_invalid(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         payload_charge["debtor"]["cpf_cnpj"] = payload_charge[
             "creditor_cpf_cnpj"
         ]
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -136,10 +136,10 @@ class TestCreateCharge:
             == "You can not add debt for yourself"
         )
 
-    def test_zero_debt_returns_error(self, payload_charge, create_db_entity):
+    def test_zero_debt_returns_error(self, payload_charge, db_entity_fixture):
         payload_charge["debito"] = 0
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -148,11 +148,11 @@ class TestCreateCharge:
         )
 
     def test_negative_debt_returns_error(
-        self, payload_charge, create_db_entity
+        self, payload_charge, db_entity_fixture
     ):
         payload_charge["debito"] = -100
         response = client.post(
-            self.build_url(create_db_entity.api_key), json=payload_charge
+            self.build_url(db_entity_fixture.api_key), json=payload_charge
         )
         assert not response.ok
         assert (
@@ -162,16 +162,25 @@ class TestCreateCharge:
 
 
 @pytest.fixture
-def create_db_charge(payload, session_maker):
+def create_db_charge(payload, session_maker, create_db_entity):
+
+    session = session_maker()
+    debtor = create_db_entity(
+        cpf_cnpj="03497961786765", name="debitor", session=session
+    )
+    creditor = create_db_entity(
+        cpf_cnpj=payload["cpf_cnpj"], name="creditor", session=session
+    )
+
     charge = models.Charge(
-        debtor_cpf_cnpj="03497961786765",
-        creditor_cpf_cnpj=payload["cpf_cnpj"],
+        debtor_cpf_cnpj=debtor.cpf_cnpj,
+        creditor_cpf_cnpj=creditor.cpf_cnpj,
         debito=100,
         is_active=True,
         created_at=datetime.datetime.utcnow(),
         payed_at=None,
     )
-    session = session_maker()
+
     session.add(charge)
 
     api_key = data_access.create_api_key(
@@ -181,8 +190,12 @@ def create_db_charge(payload, session_maker):
     session.flush()
     session.commit()
 
-    DB_info = collections.namedtuple("DB_info", "charge api_key")
-    return DB_info(charge=charge, api_key=api_key)
+    DB_info = collections.namedtuple(
+        "DB_info", "charge api_key debtor creditor"
+    )
+    return DB_info(
+        charge=charge, api_key=api_key, debtor=debtor, creditor=creditor
+    )
 
 
 @pytest.mark.usefixtures("use_db")
@@ -311,17 +324,39 @@ class TestFilterCharge:
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
-        assert request.json() == [
-            {
-                "id": create_db_charge.charge.id,
-                "debtor_cpf_cnpj": create_db_charge.charge.debtor_cpf_cnpj,
-                "creditor_cpf_cnpj": create_db_charge.charge.creditor_cpf_cnpj,
-                "debito": create_db_charge.charge.debito,
-                "is_active": create_db_charge.charge.is_active,
-                "created_at": create_db_charge.charge.created_at.isoformat(),
-                "payed_at": create_db_charge.charge.payed_at,
-            }
-        ]
+        assert request.json().pop(0).get("id") == create_db_charge.charge.id
+        assert (
+            request.json().pop(0).get("debtor").get("name")
+            == create_db_charge.debtor.name
+        )
+        assert (
+            request.json().pop(0).get("debtor").get("cpf_cnpj")
+            == create_db_charge.debtor.cpf_cnpj
+        )
+        assert (
+            request.json().pop(0).get("creditor").get("name")
+            == create_db_charge.creditor.name
+        )
+        assert (
+            request.json().pop(0).get("creditor").get("cpf_cnpj")
+            == create_db_charge.creditor.cpf_cnpj
+        )
+        assert (
+            request.json().pop(0).get("debito")
+            == create_db_charge.charge.debito
+        )
+        assert (
+            request.json().pop(0).get("is_active")
+            == create_db_charge.charge.is_active
+        )
+        assert (
+            request.json().pop(0).get("created_at")
+            == create_db_charge.charge.created_at.isoformat()
+        )
+        assert (
+            request.json().pop(0).get("payed_at")
+            == create_db_charge.charge.payed_at
+        )
 
     def test_valid_returns_same_info_on_db(
         self, create_db_charge, session_maker
@@ -332,19 +367,23 @@ class TestFilterCharge:
                 debtor_cpf_cnpj=create_db_charge.charge.debtor_cpf_cnpj,
             )
         )
-
         db_charge = session_maker().query(models.Charge).first()
-        assert request.json() == [
-            {
-                "id": db_charge.id,
-                "debtor_cpf_cnpj": db_charge.debtor_cpf_cnpj,
-                "creditor_cpf_cnpj": db_charge.creditor_cpf_cnpj,
-                "debito": db_charge.debito,
-                "is_active": db_charge.is_active,
-                "created_at": db_charge.created_at.isoformat(),
-                "payed_at": db_charge.payed_at,
-            }
-        ]
+
+        assert request.json().pop(0).get("id") == db_charge.id
+        assert (
+            request.json().pop(0).get("debtor").get("cpf_cnpj")
+            == db_charge.debtor_cpf_cnpj
+        )
+        assert (
+            request.json().pop(0).get("creditor").get("cpf_cnpj")
+            == db_charge.creditor_cpf_cnpj
+        )
+        assert request.json().pop(0).get("debito") == db_charge.debito
+        assert (
+            request.json().pop(0).get("created_at")
+            == db_charge.created_at.isoformat()
+        )
+        assert request.json().pop(0).get("payed_at") == db_charge.payed_at
 
     def test_invalid_debtor_cpf_cnpj_returns_unprocessable_entity(
         self, create_db_charge

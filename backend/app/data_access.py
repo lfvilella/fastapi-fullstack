@@ -240,11 +240,7 @@ def filter_charge(
     Debitor = sqlalchemy.orm.aliased(models.Entity)
     Creditor = sqlalchemy.orm.aliased(models.Entity)
     query = (
-        db.query(
-            models.Charge,
-            Debitor,
-            Creditor,
-        )
+        db.query(models.Charge, Debitor, Creditor,)
         .join(Debitor, Debitor.cpf_cnpj == models.Charge.debtor_cpf_cnpj)
         .join(Creditor, Creditor.cpf_cnpj == models.Charge.creditor_cpf_cnpj)
     )

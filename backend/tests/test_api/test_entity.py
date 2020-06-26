@@ -64,38 +64,36 @@ class TestReadEntity:
     def build_url(self, cpf_cnpj, api_key=None):
         return f"/api/v.1/entity/{cpf_cnpj}?api_key={api_key}"
 
-    def test_when_api_key_is_empty_returns_forbidden(self, create_db_entity):
+    def test_when_api_key_is_empty_returns_forbidden(self, db_entity_fixture):
         request = client.get(
-            self.build_url(create_db_entity.entity.cpf_cnpj, "")
+            self.build_url(db_entity_fixture.entity.cpf_cnpj, "")
         )
         assert request.status_code == 403
 
-    def test_valid_returns_ok(self, create_db_entity):
+    def test_valid_returns_ok(self, db_entity_fixture):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
+                db_entity_fixture.entity.cpf_cnpj, db_entity_fixture.api_key
             )
         )
         assert request.status_code == 200
 
-    def test_valid_returns_complete_body(self, create_db_entity):
+    def test_valid_returns_complete_body(self, db_entity_fixture):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
+                db_entity_fixture.entity.cpf_cnpj, db_entity_fixture.api_key
             )
         )
         assert request.json() == {
-            "name": create_db_entity.entity.name,
-            "cpf_cnpj": create_db_entity.entity.cpf_cnpj,
-            "type_entity": create_db_entity.entity.type_entity,
+            "name": db_entity_fixture.entity.name,
+            "cpf_cnpj": db_entity_fixture.entity.cpf_cnpj,
+            "type_entity": db_entity_fixture.entity.type_entity,
         }
 
-    def test_valid_is_same_info_on_db(
-        self, create_db_entity, session_maker
-    ):
+    def test_valid_is_same_info_on_db(self, db_entity_fixture, session_maker):
         request = client.get(
             self.build_url(
-                create_db_entity.entity.cpf_cnpj, create_db_entity.api_key
+                db_entity_fixture.entity.cpf_cnpj, db_entity_fixture.api_key
             )
         )
         db_entity = session_maker().query(models.Entity).first()
@@ -105,9 +103,9 @@ class TestReadEntity:
             "type_entity": db_entity.type_entity,
         }
 
-    def test_with_invalid_cpf_cnpj(self, create_db_entity):
+    def test_with_invalid_cpf_cnpj(self, db_entity_fixture):
         request = client.get(
-            self.build_url("1234567891-011", create_db_entity.api_key)
+            self.build_url("1234567891-011", db_entity_fixture.api_key)
         )
         assert not request.ok
         assert (
@@ -122,27 +120,23 @@ class TestReadEntityLogged:
         return f"/api/v.1/entity-logged?api_key={api_key}"
 
     def test_when_api_key_is_empty_returns_forbidden(self):
-        request = client.get(
-            self.build_url("")
-        )
+        request = client.get(self.build_url(""))
         assert request.status_code == 403
 
-    def test_valid_returns_ok(self, create_db_entity):
-        request = client.get(self.build_url(create_db_entity.api_key))
+    def test_valid_returns_ok(self, db_entity_fixture):
+        request = client.get(self.build_url(db_entity_fixture.api_key))
         assert request.status_code == 200
 
-    def test_valid_returns_complete_body(self, create_db_entity):
-        request = client.get(self.build_url(create_db_entity.api_key))
+    def test_valid_returns_complete_body(self, db_entity_fixture):
+        request = client.get(self.build_url(db_entity_fixture.api_key))
         assert request.json() == {
-            "name": create_db_entity.entity.name,
-            "cpf_cnpj": create_db_entity.entity.cpf_cnpj,
-            "type_entity": create_db_entity.entity.type_entity,
+            "name": db_entity_fixture.entity.name,
+            "cpf_cnpj": db_entity_fixture.entity.cpf_cnpj,
+            "type_entity": db_entity_fixture.entity.type_entity,
         }
 
-    def test_valid_is_same_info_on_db(
-        self, create_db_entity, session_maker
-    ):
-        request = client.get(self.build_url(create_db_entity.api_key))
+    def test_valid_is_same_info_on_db(self, db_entity_fixture, session_maker):
+        request = client.get(self.build_url(db_entity_fixture.api_key))
         db_entity = session_maker().query(models.Entity).first()
         assert request.json() == {
             "name": db_entity.name,

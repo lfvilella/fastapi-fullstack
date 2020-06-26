@@ -11,7 +11,21 @@ def payload():
 
 
 @pytest.fixture
-def create_db_entity(payload, session_maker):
+def create_db_entity(session_maker):
+    def _create(session=None, persist=True, **data):
+        session = session or session_maker()
+        entity = models.Entity(**data)
+        session.add(entity)
+        session.flush()
+        if persist:
+            session.commit()
+        return entity
+
+    return _create
+
+
+@pytest.fixture
+def db_entity_fixture(session_maker):
     entity = models.Entity(
         cpf_cnpj="80962607401", type_entity="pf", name="root"
     )
