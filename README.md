@@ -17,13 +17,14 @@ $ make up
 ```
 
 Open: http://localhost:80
+
 Open API: http://localhost:8000/docs
 
 # API Resources
 
 All resources need api_key except create_entity.
 
-![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/api_page.png?raw=true)
+![alt text](https://github.com/lfvilella/xyzCredito-CCT/blob/master/readme_img_api_page.png?raw=true)
 
 ## Entity collection [ /api/v.1/entity ]
 
@@ -132,12 +133,15 @@ http://localhost:8000/api/v.1/entity?debtor_cpf_cnpj=<value>&creditor_cpf_cnpj=<
 ```
 
 ### Payment a charge [POST][ /api/v.1/charge/payment ]
+```
 {
   "id": "string",
   "creditor_cpf_cnpj": "string"
 }
+```
 
 - Successful Response 200 (application/json)
+```
 {
   "id": "string",
   "debtor_cpf_cnpj": "string",
@@ -147,6 +151,7 @@ http://localhost:8000/api/v.1/entity?debtor_cpf_cnpj=<value>&creditor_cpf_cnpj=<
   "created_at": "2020-06-26T01:09:15.002Z",
   "payed_at": "2020-06-26T01:09:15.002Z"
 }
+```
 
 ## Authenticate collection [ /api/v.1/authenticate ]
 
