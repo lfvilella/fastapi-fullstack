@@ -172,9 +172,17 @@ var app = new Vue({
           this.chargesList = response.data.map(
             row => ({
               created_at: moment(row.created_at).format('L'),
-              creditor_cpf_cnpj: row.creditor_cpf_cnpj,
+              creditor: {
+                name: row.creditor.name,
+                cpf_cnpj: row.creditor.cpf_cnpj,
+                type_entity: row.creditor.type_entity
+              },
               debito: row.debito,
-              debtor_cpf_cnpj: row.debtor_cpf_cnpj,
+              debtor: {
+                name: row.debtor.name,
+                cpf_cnpj: row.debtor.cpf_cnpj, 
+                type_entity: row.debtor.type_entity
+              },
               id: row.id,
               is_active: row.is_active,
               payed_at: row.payed_at,
@@ -203,7 +211,7 @@ var app = new Vue({
             this.errorCreateCharge = 'Campo nome está vazio.';
             return;
           }
-          this.getCharges(this.search);
+          this.getCharges(chargeData.debtor.cpf_cnpj);
           this.cleanAllMensagens();
           console.log(response)
         })

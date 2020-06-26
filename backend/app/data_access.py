@@ -234,26 +234,51 @@ def filter_charge(
     db: sqlalchemy.orm.Session,
     charge_filter: schemas.ChargeFilter,
     api_key: str,
-) -> typing.List[models.Charge]:
+) -> typing.List[schemas.ChargeFullInfo]:
     check_api_key(db, api_key=api_key)
 
-    query = db.query(models.Charge)
+
+    Debitor = sqlalchemy.orm.aliased(models.Entity)
+    Creditor = sqlalchemy.orm.aliased(models.Entity)
+    query = (
+        db.query(
+            models.Charge,
+            Debitor,
+            Creditor,
+        )
+        .join(Debitor, Debitor.cpf_cnpj == models.Charge.debtor_cpf_cnpj)
+        .join(Creditor, Creditor.cpf_cnpj == models.Charge.creditor_cpf_cnpj)
+    )
+
     if charge_filter.debtor_cpf_cnpj:
-        query = query.filter_by(debtor_cpf_cnpj=charge_filter.debtor_cpf_cnpj)
+        query = query.filter(models.Charge.debtor_cpf_cnpj == charge_filter.debtor_cpf_cnpj)
 
     if charge_filter.creditor_cpf_cnpj:
-        query = query.filter_by(
-            creditor_cpf_cnpj=charge_filter.creditor_cpf_cnpj
+        query = query.filter(
+            models.Charge.creditor_cpf_cnpj == charge_filter.creditor_cpf_cnpj
         )
 
     if charge_filter.is_active is not None:
-        query = query.filter_by(is_active=charge_filter.is_active)
+        query = query.filter(models.Charge.is_active == charge_filter.is_active)
 
-    queries = query.all()
-    if not queries:
+    rows = query.all()
+    if not rows:
         raise DoesNotExisit("Charge not found")
 
-    return queries
+    full_charges_info = []
+    for charge_db, debitor_db, creditor_db in rows:
+        charge_info = schemas.ChargeFullInfo(
+            id=charge_db.id,
+            debtor=debitor_db,
+            creditor=creditor_db,
+            debito=charge_db.debito,
+            is_active=charge_db.is_active,
+            created_at=charge_db.created_at,
+            payed_at=charge_db.payed_at,
+        )
+        full_charges_info.append(charge_info)
+
+    return full_charges_info
 
 
 def create_charge(

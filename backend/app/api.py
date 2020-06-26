@@ -121,7 +121,7 @@ def read_charge(
 
 
 @app.get(
-    _VERSION + "/charge", response_model=typing.List[schemas.ChargeDatabase]
+    _VERSION + "/charge", response_model=typing.List[schemas.ChargeFullInfo]
 )
 def filter_charge(
     request: fastapi.Request,

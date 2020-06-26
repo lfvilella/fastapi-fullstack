@@ -39,6 +39,9 @@ class EntityBase(pydantic.BaseModel):
 
 
 class Entity(EntityBase):
+    class Config:
+        orm_mode = True
+
     type_entity: typing.Optional[EntityTypeEnum] = None
 
     @pydantic.validator("type_entity", pre=True, always=True)
@@ -90,6 +93,19 @@ class ChargeDatabase(pydantic.BaseModel):
     id: str
     debtor_cpf_cnpj: CpfOrCnpj
     creditor_cpf_cnpj: CpfOrCnpj
+    debito: pydantic.PositiveFloat
+    is_active: bool
+    created_at: datetime.datetime
+    payed_at: datetime.datetime = None
+
+
+class ChargeFullInfo(pydantic.BaseModel):
+    class Config:
+        orm_mode = True
+
+    id: str
+    debtor: Entity
+    creditor: Entity
     debito: pydantic.PositiveFloat
     is_active: bool
     created_at: datetime.datetime
