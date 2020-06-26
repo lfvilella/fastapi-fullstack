@@ -130,6 +130,11 @@ var app = new Vue({
     doSignUp: function () {
       this.setLoadingState(true);
       const { name, cpf_cnpj, password } = this.signUpData;
+      if (password === "") {
+        this.errorSignUp = 'A Senha está inválida!';
+        this.setLoadingState(false);
+        return;
+      }
       return axios.post('/api/v.1/entity', {
         name: name,
         cpf_cnpj: cpf_cnpj,
@@ -137,10 +142,6 @@ var app = new Vue({
       })
         .then((response) => {
           this.setLoadingState(false);
-          if (password == "") {
-            this.errorSignUp = 'A Senha está inválida!';
-            return;
-          }
           this.doLogin({
             cpf_cnpj: cpf_cnpj,
             password: password,
@@ -203,14 +204,15 @@ var app = new Vue({
 
     createCharge: function (chargeData) {
       this.setLoadingState(true);
+      if (this.chargeData.debtor.name === "") {
+        this.errorCreateCharge = 'Campo nome está vazio.';
+        this.setLoadingState(false);
+        return;
+      }
       chargeData.creditor_cpf_cnpj = this.loggedUser.cpf_cnpj;
       axios.post('/api/v.1/charge', chargeData)
         .then((response) => {
           this.setLoadingState(false);
-          if (this.chargeData.debtor.name == "") {
-            this.errorCreateCharge = 'Campo nome está vazio.';
-            return;
-          }
           this.getCharges(chargeData.debtor.cpf_cnpj);
           this.cleanAllMensagens();
           console.log(response)

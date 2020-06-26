@@ -142,8 +142,8 @@
             <p class="mb-1">R$ {{ charge.debito }}</p>
             <small>Credor: {{ charge.creditor.name }} - {{ charge.creditor.cpf_cnpj }}</small>
             <button style="font-size: 10pt;" class="btn btn-success"
-              v-if="loggedUser.cpf_cnpj == charge.creditor_cpf_cnpj"
-              v-on:click="doPayment({ id: charge.id, creditor_cpf_cnpj:charge.creditor_cpf_cnpj })">
+              v-if="loggedUser.cpf_cnpj == charge.creditor.cpf_cnpj"
+              v-on:click="doPayment({ id: charge.id, creditor_cpf_cnpj:charge.creditor.cpf_cnpj })">
               Excluir Débito <i style="font-size: 12pt;" class="fas fa-handshake"></i></button>
           </div>
         </div>

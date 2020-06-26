@@ -136,6 +136,7 @@ def filter_charge(
         creditor_cpf_cnpj=creditor_cpf_cnpj,
         is_active=is_active,
     )
+
     return data_access.filter_charge(
         db,
         charge_filter=charge_filter,

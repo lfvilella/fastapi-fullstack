@@ -237,7 +237,6 @@ def filter_charge(
 ) -> typing.List[schemas.ChargeFullInfo]:
     check_api_key(db, api_key=api_key)
 
-
     Debitor = sqlalchemy.orm.aliased(models.Entity)
     Creditor = sqlalchemy.orm.aliased(models.Entity)
     query = (
@@ -251,7 +250,9 @@ def filter_charge(
     )
 
     if charge_filter.debtor_cpf_cnpj:
-        query = query.filter(models.Charge.debtor_cpf_cnpj == charge_filter.debtor_cpf_cnpj)
+        query = query.filter(
+            models.Charge.debtor_cpf_cnpj == charge_filter.debtor_cpf_cnpj
+        )
 
     if charge_filter.creditor_cpf_cnpj:
         query = query.filter(
@@ -259,7 +260,9 @@ def filter_charge(
         )
 
     if charge_filter.is_active is not None:
-        query = query.filter(models.Charge.is_active == charge_filter.is_active)
+        query = query.filter(
+            models.Charge.is_active == charge_filter.is_active
+        )
 
     rows = query.all()
     if not rows:
