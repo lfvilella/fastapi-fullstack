@@ -32,5 +32,5 @@ Open API docs: http://localhost/api/v.1/docs
 
 # Documentation
 
-  - [Package docs](./docs)
+  - [Package docs](https://lfvilella.github.io/xyzCredito-CCT/)
   - [API Live docs](http://xyzcreditos.lfvilella.com/api/v.1/docs)
