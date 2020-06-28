@@ -31,4 +31,7 @@ delete-container: down
 
 remove: delete-container ## Delete containers and images
 
+docs: start
+	@docker-compose exec backend pdoc backend/app -o docs --force
+
 .DEFAULT_GOAL := help
