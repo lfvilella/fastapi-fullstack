@@ -22,7 +22,8 @@ class DataAccessException(Exception):
 class APIKeyNotFound(DataAccessException):
     """ API Key Not Found
 
-    This error is raised when the API Key string is not found in the database or is not valid
+    This error is raised when the API Key string is not found in the
+     database or is not valid
     """
     pass
 
@@ -216,7 +217,8 @@ def check_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
         api_key (str): identifier.verifier e.g RaNdomString.Verifier
 
     Raises:
-        APIKeyNotFound: The raises is not valid or not found error when API Key not exist.
+        APIKeyNotFound: The raises is not valid or not found error
+         when API Key not exist.
     """
     indentifier, verifier = split_api_key(api_key)
 
