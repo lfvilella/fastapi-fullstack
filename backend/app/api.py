@@ -7,9 +7,14 @@ from . import schemas, data_access, database, models
 # Create DB
 models.Base.metadata.create_all(bind=database.engine)
 
-app = fastapi.FastAPI()
 _VERSION = "/api/v.1"
 _SESSION_KEY = "api_key"
+
+
+app = fastapi.FastAPI(
+    openapi_url=_VERSION + "/openapi.json",
+    docs_url=_VERSION + "/docs",
+)
 
 
 # Dependency
