@@ -10,7 +10,7 @@ services:
     working_dir: /app
     stdin_open: true
     tty: true
-    command: ${RUNSERVER:-/bin/bash}
+    command: ${RUNSERVER:-uvicorn backend.app.api:app --host 0.0.0.0}
     networks:
       - backend-network
     restart: ${DOCKER_RESTART:-no}

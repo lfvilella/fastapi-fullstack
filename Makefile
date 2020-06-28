@@ -6,13 +6,14 @@ help: ## This help.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: delete-container ## Build the container
+	@[ -f .env ] || cp template.env .env
 	@docker-compose up --build -d
 
 test: start ## Run tests
 	@docker-compose exec backend pytest
 
 restart: ## Restart the container
-	@docker-compose restart backend
+	@docker-compose restart
 
 cmd: start ## Access bash
 	@docker-compose exec backend /bin/bash
