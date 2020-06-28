@@ -1,3 +1,8 @@
+""" Data Access
+
+This module is reponsible to handle all interactions to the database
+"""
+
 import sqlalchemy.orm
 import typing
 import datetime
@@ -7,10 +12,18 @@ from . import models, schemas, security
 
 
 class DataAccessException(Exception):
+    """ Data Access Exception
+
+    This error is raised when data passed to the function is not valid
+    """
     pass
 
 
 class APIKeyNotFound(DataAccessException):
+    """ API Key Not Found
+
+    This error is raised when the API Key string is not found in the database or is not valid
+    """
     pass
 
 
@@ -196,6 +209,15 @@ def delete_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
 
 
 def check_api_key(db: sqlalchemy.orm.Session, api_key: str) -> models.APIKey:
+    """ Check API Key
+    This method is used to verify API Key is valid
+
+    Args:
+        api_key (str): identifier.verifier e.g RaNdomString.Verifier
+
+    Raises:
+        APIKeyNotFound: The raises is not valid or not found error when API Key not exist.
+    """
     indentifier, verifier = split_api_key(api_key)
 
     db_api_key = get_entity_api_key_by_id(db, api_key=indentifier)
