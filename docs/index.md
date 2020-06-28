@@ -1,16 +1,16 @@
-FORMAT: A1
-
 # xyzCréditos
 
-Open: http://xyzcreditos.lfvilella.com
+Click [here](http://xyzcreditos.lfvilella.com) to get a live demo.
 
 This is an API about charges such as SERASA, obviously simpler.
 
-Techs:
+Tech Stack:
 - Python
 - Fastapi
 - Sqlalchemy
 - Docker / docker-compose
 - VueJS
 
-# [Package Docs](./app)
+# Docs
+
+  - [backend/app](./app)
