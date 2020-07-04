@@ -1,5 +1,10 @@
 # xyzCréditos
 
+[![CI](https://github.com/lfvilella/fastapi-fullstack/workflows/CI/badge.svg?event=push)](https://github.com/lfvilella/fastapi-fullstack/actions?query=event%3Apush+branch%3Amaster+workflow%3ACI)
+[![Coverage](https://codecov.io/gh/lfvilella/fastapi-fullstack/branch/master/graph/badge.svg)](https://codecov.io/gh/lfvilella/fastapi-fullstack)
+[![license](https://img.shields.io/github/license/lfvilella/fastapi-fullstack.svg)](https://github.com/lfvilella/fastapi-fullstack/blob/master/LICENSE)
+
+
 Open: http://xyzcreditos.lfvilella.com
 
 This is an API about charges such as SERASA, obviously simpler.
