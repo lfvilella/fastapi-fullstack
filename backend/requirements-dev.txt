@@ -1,5 +1,5 @@
 -r requirements.txt
-ipython==7.15.0
+ipython==7.16.3
 black==19.10b0
 pdoc3==0.8.2
 pytest==5.4.3
